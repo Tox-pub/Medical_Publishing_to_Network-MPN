@@ -579,7 +579,7 @@ class Workbench(tk.Tk):
             'provided without warranty of any kind.\n\n'
             'See Help > License for the full text and the third-party '
             'notices, and Help > Cite this Program for how to cite it.\n\n'
-            'https://github.com/Tox-pub/Mesh-Network-Analysis\n'))
+            'https://github.com/Tox-pub/Medical_Publications_Networks-MPN\n'))
 
     def _find_doc(self, name):
         """Where this copy keeps a shipped document, or None."""

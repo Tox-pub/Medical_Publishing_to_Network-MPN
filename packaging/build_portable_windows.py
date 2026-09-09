@@ -345,7 +345,7 @@ WHAT IS IN HERE
     Software Foundation.
 
 LICENCE AND SOURCE
-    https://github.com/Tox-pub/Mesh-Network-Analysis
+    https://github.com/Tox-pub/Medical_Publications_Networks-MPN
 """.format(ver=VERSION, py=PY_VER)
 
 

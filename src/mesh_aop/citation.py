@@ -19,7 +19,7 @@ AUTHOR_FAMILY = 'Sax'
 AUTHOR_GIVEN = 'Jakob'
 AFFILIATION = 'Karolinska Institutet'
 YEAR = 2026
-REPO = 'https://github.com/Tox-pub/Mesh-Network-Analysis'
+REPO = 'https://github.com/Tox-pub/Medical_Publications_Networks-MPN'
 
 
 def package_version(default='3.2.10'):

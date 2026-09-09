@@ -1,7 +1,7 @@
 # Installing MPN (Medical Publishing to Network)
 
 **One file per system.** Download the one with your system's name on it from
-[Releases](https://github.com/Tox-pub/Mesh-Network-Analysis/releases), and
+[Releases](https://github.com/Tox-pub/Medical_Publications_Networks-MPN/releases), and
 ignore the other two.
 
 | System | File | What to do |

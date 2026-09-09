@@ -15,7 +15,7 @@ A desktop application for Windows, and a command-line pipeline for any platform.
 ## Get it
 
 **One file per system**, from
-[Releases](https://github.com/Tox-pub/Mesh-Network-Analysis/releases).
+[Releases](https://github.com/Tox-pub/Medical_Publications_Networks-MPN/releases).
 
 | System | Download | What to do |
 | :--- | :--- | :--- |
