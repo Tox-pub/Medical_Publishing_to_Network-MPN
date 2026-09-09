@@ -11,7 +11,7 @@ authors:
     given-names: Jakob
     email: jakob.sax@ki.se
     affiliation: Karolinska Institutet
-repository-code: 'https://github.com/Tox-pub/Medical_Publications_Networks-MPN'
+repository-code: 'https://github.com/Tox-pub/Medical_Publishing_to_Network-MPN'
 abstract: >-
   Builds and validates MeSH co-occurrence concept networks
   from the PubMed literature, connecting chemical stressors

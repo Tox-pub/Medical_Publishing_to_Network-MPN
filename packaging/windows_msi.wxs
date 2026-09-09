@@ -38,7 +38,7 @@
 
     <Icon Id="AppIcon" SourceFile="$(PortableDir)\app\mpn\assets\mpn.ico" />
     <Property Id="ARPPRODUCTICON" Value="AppIcon" />
-    <Property Id="ARPURLINFOABOUT" Value="https://github.com/Tox-pub/Medical_Publications_Networks-MPN" />
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/Tox-pub/Medical_Publishing_to_Network-MPN" />
     <!-- Without this the Add/Remove Programs entry shows a blank location and
          Windows cannot report the installed size. It has to be set after
          CostFinalize, when INSTALLFOLDER has actually been resolved. -->

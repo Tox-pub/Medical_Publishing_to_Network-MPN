@@ -147,8 +147,8 @@ The commands assume **PowerShell** on Windows or **bash** on Linux and macOS.
 Adjust the paths and the activation command for another shell.
 
 ```bash
-git clone https://github.com/Tox-pub/Medical_Publications_Networks-MPN.git
-cd Medical_Publications_Networks-MPN
+git clone https://github.com/Tox-pub/Medical_Publishing_to_Network-MPN.git
+cd Medical_Publishing_to_Network-MPN
 python -m venv ~/mesh_env
 ~/mesh_env/bin/python -m pip install -e .
 ```
@@ -216,7 +216,7 @@ If upstream dependencies are already built, specific modules can be executed in 
 The package assumes and enforces the following directory architecture.
 
 ```text
-Medical_Publications_Networks-MPN/
+Medical_Publishing_to_Network-MPN/
 │
 ├── data/                               # Data storage
 │   ├── raw/                            # Inputs for a run

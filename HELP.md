@@ -874,7 +874,7 @@ On sparse or disconnected graphs, the power-iteration solver may not converge wi
 The package assumes and enforces the following directory architecture.
 
 ```text
-Medical_Publications_Networks-MPN/
+Medical_Publishing_to_Network-MPN/
 │
 ├── data/                               # Data storage
 │   ├── raw/                            # Inputs for a run
@@ -941,7 +941,7 @@ Medical_Publications_Networks-MPN/
 If you use this software, or a network it produced, in published work, please cite it:
 
 ```
-Sax, J. (2026). MPN: MeSH co-occurrence concept networks for Adverse Outcome Pathways (Version 3.2.10) [Computer software]. https://github.com/Tox-pub/Medical_Publications_Networks-MPN
+Sax, J. (2026). MPN: MeSH co-occurrence concept networks for Adverse Outcome Pathways (Version 3.2.10) [Computer software]. https://github.com/Tox-pub/Medical_Publishing_to_Network-MPN
 ```
 
 Archived release: [10.5281/zenodo.18662959](https://doi.org/10.5281/zenodo.18662959)

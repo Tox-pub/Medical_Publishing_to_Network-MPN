@@ -345,7 +345,7 @@ WHAT IS IN HERE
     Software Foundation.
 
 LICENCE AND SOURCE
-    https://github.com/Tox-pub/Medical_Publications_Networks-MPN
+    https://github.com/Tox-pub/Medical_Publishing_to_Network-MPN
 """.format(ver=VERSION, py=PY_VER)
 
 
