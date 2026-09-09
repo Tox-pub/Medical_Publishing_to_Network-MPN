@@ -165,7 +165,7 @@ TABS = [
         F('directories.results_dir', 'Results folder', 'text', '',
           'Your own outputs: figures, workbooks, the run ledger and the workflow '
           'report. A figures subfolder is created inside it.',
-          'Default: empty, meaning Documents\\MeSH Workbench for an installed '
+          'Default: empty, meaning Documents\\MPN for an installed '
           'copy, or the program folder for a portable one. Small - megabytes, '
           'not gigabytes.',
           'Deliberately not inside the data folder: results are your work and '
@@ -265,11 +265,11 @@ TABS = [
     ]),
     ('Credentials', [
         F('credentials.entrez_email', 'NCBI e-mail', 'text', '',
-          'Identifies you to Entrez, as NCBI requires. See Help > MeSH Workbench Manual on details on how to acquire one.', 
+          'Identifies you to Entrez, as NCBI requires. See Help > MPN Manual on details on how to acquire one.', 
           'Default: none.',
           'Required for retrieval. NCBI may block requests that do not carry it.'),
         F('credentials.entrez_api_key', 'NCBI API key', 'text', '',
-          'Raises the Entrez rate limit from 3 to 10 requests per second.  See Help > MeSH Workbench Manual on details on how to acquire one.',
+          'Raises the Entrez rate limit from 3 to 10 requests per second.  See Help > MPN Manual on details on how to acquire one.',
           'Default: none.',
           'Optional but strongly recommended - retrieval is several times faster '
           'with one. Stored on this machine only. Removed by emptying the field and clicking SAVE or on uninstall.'),
@@ -508,7 +508,7 @@ TABS = [
           'eigenvector, whole-corpus or subgraph. MRS is the score adjusted by '
           'how strongly the literature supports the term; subgraph means '
           'centrality measured within the consensus network rather than the '
-          'whole corpus. See Help > MeSH Workbench Manual for more details.\n'
+          'whole corpus. See Help > MPN Manual for more details.\n'
           '\n'
           'The six subgraph options only exist on full pipeline runs with complete networks.',
           ['MRS_pagerank_centrality',
@@ -588,7 +588,7 @@ TABS = [
           'Colours are viridis, min-max scaled across the terms drawn, so the '
           'full range of the scale is used however narrow the spread is - dark '
           'purple is the lowest value present, yellow the highest. The colour '
-          'bar carries the real numbers. See Help > MeSH Workbench Manual for further explanation of the metrics.',
+          'bar carries the real numbers. See Help > MPN Manual for further explanation of the metrics.',
           ['MRS_pagerank_centrality',
            'MRS_betweenness_centrality',
            'MRS_eigenvector_centrality',
@@ -711,7 +711,7 @@ TAB_NOTES = {
         'secondary analysis and the figures. It does NOT run the benchmark. '
         'That is deliberate: the benchmark scores every weighting against every '
         'article in the corpus, which takes a good while on a full-sized one, '
-        'and most runs do not need it. See Help > MeSH Workbench Manual for more details.\n'
+        'and most runs do not need it. See Help > MPN Manual for more details.\n'
         '\n'
         'To run it, pick "benchmark - ground truth & validation" from the step '
         'list and press Run. Everything it needs is already on disk by then, so '
@@ -732,7 +732,7 @@ TAB_NOTES = {
         'The prefixed one is looked for first, so each project can keep its own '
         'set side by side without renaming anything between runs.\n'
         '\n'
-        'BUILDING YOUR OWN. See Help > MeSH Workbench Manual for the walkthrough: which columns are '
+        'BUILDING YOUR OWN. See Help > MPN Manual for the walkthrough: which columns are '
         'required, what the headers must be called, and how your PMIDs are '
         'matched against the corpus.\n'
         '\n'

@@ -171,7 +171,7 @@ def check_not_stale(portable, force=False):
         '      Packaging this would ship code that is already superseded.\n'
         '      Rebuild the portable tree first:\n\n'
         f'          python packaging/build_portable_windows.py --out <dir>\n\n'
-        '      then point this script at it with --portable <dir>/MeshWorkbench.\n'
+        '      then point this script at it with --portable <dir>/MPN.\n'
         '      Pass --force to package it anyway.\n')
     if force:
         print(message)
@@ -237,8 +237,8 @@ def main():
     #     <Files Include="$(PortableDir)\**">
     # and WiX resolves a relative Include against the .wxs file's own directory,
     # which is packaging/ - not the working directory the build was started
-    # from. Given --portable build/MeshWorkbench, as CI does, it looked for
-    # packaging/build/MeshWorkbench, found nothing, and produced a 1 MB
+    # from. Given --portable build/MPN, as CI does, it looked for
+    # packaging/build/MPN, found nothing, and produced a 1 MB
     # installer with the UI and the icon and none of the application. It did not
     # fail: a glob that matches nothing is not an error to WiX. This ran green
     # for as long as it did only because every local build passed an absolute
@@ -256,7 +256,7 @@ def main():
     wix = find_wix(a.wix)
     out_dir = os.path.abspath(a.out or os.path.dirname(portable))
     os.makedirs(out_dir, exist_ok=True)
-    msi = os.path.join(out_dir, 'MeSH-Workbench-3.2.10-win64.msi')
+    msi = os.path.join(out_dir, 'MPN-3.2.10-win64.msi')
 
     print(f'Building MSI\n  portable : {portable}\n  compiler : {wix}')
     env = dotnet_env()

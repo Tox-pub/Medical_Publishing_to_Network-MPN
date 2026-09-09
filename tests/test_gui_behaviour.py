@@ -15,8 +15,8 @@ import tempfile
 sys.path.insert(0, 'src')
 
 import tkinter as tk                                               # noqa: E402
-from mesh_workbench import app as appmod                            # noqa: E402
-from mesh_workbench.app import Workbench                            # noqa: E402
+from mpn import app as appmod                            # noqa: E402
+from mpn.app import Workbench                            # noqa: E402
 
 FAILS = []
 ASKED = []

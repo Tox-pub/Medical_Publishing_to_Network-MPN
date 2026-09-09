@@ -1,10 +1,10 @@
 @echo off
-REM  MeSH Workbench - portable launcher
+REM  MPN - portable launcher
 REM
 REM  Runs the bundled Python, which is the official embeddable build signed by
 REM  the Python Software Foundation. Nothing here needs installing and nothing
 REM  is written outside this folder.
-title MeSH Workbench
+title MPN
 cd /d "%~dp0"
 if not exist "python\python.exe" (
   echo [X] python\python.exe is missing.

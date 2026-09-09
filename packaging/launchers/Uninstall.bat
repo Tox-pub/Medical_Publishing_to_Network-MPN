@@ -2,7 +2,7 @@
 REM  Removes the program and everything it downloaded or built - including the
 REM  ETL working folder in the system temp directory, which deleting this folder
 REM  would otherwise leave behind.
-title MeSH Workbench - Uninstall
+title MPN - Uninstall
 cd /d "%~dp0"
 if not exist "python\python.exe" (
   echo [X] python\python.exe is missing - nothing to run.

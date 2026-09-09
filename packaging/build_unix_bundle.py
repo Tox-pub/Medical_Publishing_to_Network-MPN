@@ -48,7 +48,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
 import build_location                                              # noqa: E402
-NAME = 'MeSH-Workbench'
+NAME = 'MPN'
 PY_SERIES = '3.12'
 
 # Each target names three things: the CPython triple published by
@@ -148,7 +148,7 @@ def _api_headers():
     Locally there is usually no token and none is needed - one developer does
     not approach 60 an hour.
     """
-    headers = {'User-Agent': 'mesh-workbench-build'}
+    headers = {'User-Agent': 'mpn-build'}
     token = (os.environ.get('GITHUB_TOKEN') or os.environ.get('GH_TOKEN') or '').strip()
     if token:
         headers['Authorization'] = f'Bearer {token}'
@@ -340,7 +340,7 @@ def fetch_wheels(tags, dest):
 
 
 LAUNCH_SH = """#!/bin/sh
-# MeSH Workbench - launcher.
+# MPN - launcher.
 #
 # Two jobs before the window opens.
 #
@@ -388,22 +388,22 @@ fi
 #    path, and that is not known until this folder is unpacked somewhere, so
 #    it cannot be shipped ready-made - it is written here instead, and
 #    rewritten if the folder is later moved. Nothing outside the user's own
-#    ~/.local/share is touched: no root, no system files, and mesh-uninstall
+#    ~/.local/share is touched: no root, no system files, and mpn-uninstall
 #    takes it away again.
 if [ "$(uname -s)" = "Linux" ]; then
     APPS="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
-    ENTRY="$APPS/mesh-workbench.desktop"
-    if ! grep -qF "Exec=\\"$HERE/MeSH Workbench\\"" "$ENTRY" 2>/dev/null; then
+    ENTRY="$APPS/mpn.desktop"
+    if ! grep -qF "Exec=\\"$HERE/MPN\\"" "$ENTRY" 2>/dev/null; then
         if mkdir -p "$APPS" 2>/dev/null; then
             cat > "$ENTRY" <<DESKTOP_ENTRY_EOF
 [Desktop Entry]
 Type=Application
 Version=1.0
-Name=MeSH Workbench
+Name=MPN
 GenericName=MeSH concept network builder
 Comment=Build MeSH co-occurrence concept networks from PubMed
-Exec="$HERE/MeSH Workbench"
-Icon=$HERE/app/src/mesh_workbench/assets/mesh_workbench.png
+Exec="$HERE/MPN"
+Icon=$HERE/app/src/mpn/assets/mpn.png
 Path=$HERE
 Terminal=false
 StartupNotify=true
@@ -414,7 +414,7 @@ DESKTOP_ENTRY_EOF
             if command -v update-desktop-database >/dev/null 2>&1; then
                 update-desktop-database "$APPS" >/dev/null 2>&1 || true
             fi
-            echo "Added MeSH Workbench to your applications menu."
+            echo "Added MPN to your applications menu."
         fi
     fi
 fi
@@ -422,15 +422,15 @@ fi
 # The application runs from source on the path: pure Python, nothing to build.
 PYTHONPATH="$HERE/app/src${PYTHONPATH:+:$PYTHONPATH}"
 export PYTHONPATH
-exec "$PY" -m mesh_workbench "$@"
+exec "$PY" -m mpn "$@"
 """
 
 UNINSTALL_SH = """#!/bin/sh
 # Remove what this program put OUTSIDE this folder.
 #
 # The bundle is self-contained, but the things it produces are not: settings
-# and downloaded data go under ~/.local/share/MeSH Workbench, and results go to
-# ~/Documents/MeSH Workbench, so that a database survives replacing the program
+# and downloaded data go under ~/.local/share/MPN, and results go to
+# ~/Documents/MPN, so that a database survives replacing the program
 # and two people on one machine do not share a results folder.
 #
 # That means deleting this folder is NOT a complete uninstall - it can leave
@@ -452,7 +452,7 @@ export PYTHONPATH
 "$PY" -m mesh_aop.uninstall_cli "$@"
 
 # The applications-menu entry, if the launcher wrote one.
-ENTRY="${XDG_DATA_HOME:-$HOME/.local/share}/applications/mesh-workbench.desktop"
+ENTRY="${XDG_DATA_HOME:-$HOME/.local/share}/applications/mpn.desktop"
 if [ -f "$ENTRY" ]; then
     rm -f "$ENTRY"
     echo "Removed the applications-menu entry."
@@ -496,8 +496,8 @@ def _write_png_icon(assets_dir):
     still launches, it just draws with the desktop's generic icon, which is not
     worth failing a build over.
     """
-    ico = os.path.join(assets_dir, 'mesh_workbench.ico')
-    png = os.path.join(assets_dir, 'mesh_workbench.png')
+    ico = os.path.join(assets_dir, 'mpn.ico')
+    png = os.path.join(assets_dir, 'mpn.png')
     if not os.path.exists(ico):
         print('    [!] no .ico to convert; the menu entry will use a generic icon')
         return
@@ -547,7 +547,7 @@ def _unix_permissions(info):
     """Restore the executable bit, which Windows cannot store.
 
     NTFS has no execute permission, so everything unpacked and re-packed here
-    comes out 0666 - and on the far side `./MeSH Workbench` fails with
+    comes out 0666 - and on the far side `./MPN` fails with
     "Permission denied", as does the interpreter it would have called. tar
     carries the mode, so the mode is reconstructed from what the file is.
 
@@ -560,7 +560,7 @@ def _unix_permissions(info):
     elif ('/python/bin/' in name
             or name.endswith(('.so', '.dylib'))
             or '.so.' in os.path.basename(name)
-            or os.path.basename(name) in ('MeSH Workbench', 'mesh-pipeline', 'mesh-uninstall')):
+            or os.path.basename(name) in ('MPN', 'mpn-pipeline', 'mpn-uninstall')):
         info.mode = 0o755
     else:
         info.mode = 0o644
@@ -600,7 +600,7 @@ def build(target, out_dir, stripped=True):
     # A PNG beside the .ico, for the Linux menu entry the launcher writes:
     # freedesktop icon lookup does not read .ico, so an .ico Icon= line shows
     # the generic missing-application square on most desktops.
-    _write_png_icon(os.path.join(app, 'src', 'mesh_workbench', 'assets'))
+    _write_png_icon(os.path.join(app, 'src', 'mpn', 'assets'))
 
     # Our own licence travels with the program. Redistributing CPython, Tcl/Tk
     # and forty compiled wheels without stating what any of it is licensed
@@ -633,9 +633,9 @@ def build(target, out_dir, stripped=True):
               encoding='utf-8', newline='\n') as fh:
         fh.write('\n'.join(wheeled + pure) + '\n')
 
-    for fname, body in (('MeSH Workbench', LAUNCH_SH),
-                        ('mesh-pipeline', PIPELINE_SH),
-                        ('mesh-uninstall', UNINSTALL_SH)):
+    for fname, body in (('MPN', LAUNCH_SH),
+                        ('mpn-pipeline', PIPELINE_SH),
+                        ('mpn-uninstall', UNINSTALL_SH)):
         path = os.path.join(staging, fname)
         with open(path, 'w', encoding='utf-8', newline='\n') as fh:
             fh.write(body)
@@ -652,7 +652,7 @@ BEFORE THE FIRST RUN, ON macOS
     Clearing the tag needs no password, no Apple account and nothing to pay.
     The launcher does it for you: open Terminal, change to this folder, and
 
-        ./"MeSH Workbench"
+        ./"MPN"
 
     The launcher itself is a shell script, which macOS reads with its own
     signed /bin/sh, so it is not blocked and can clear the flag from
@@ -672,11 +672,11 @@ BEFORE THE FIRST RUN, ON macOS
 
     with open(os.path.join(staging, 'README.txt'), 'w',
               encoding='utf-8', newline='\n') as fh:
-        fh.write(f'''MeSH Workbench {ver} - {spec["pretty"]}
+        fh.write(f'''MPN {ver} - {spec["pretty"]}
 {gatekeeper}
 TO RUN IT
 
-    ./"MeSH Workbench"
+    ./"MPN"
 
 That is all. This folder carries its own Python, so nothing needs to be
 installed first - no system Python, no tkinter package, no administrator
@@ -685,7 +685,7 @@ minute; it needs no network.
 
 Without a desktop, the pipeline runs on its own:
 
-    ./mesh-pipeline --step all
+    ./mpn-pipeline --step all
 
 TO CHECK IT WORKS WITHOUT DOWNLOADING 44 GB
 
@@ -700,16 +700,16 @@ WHERE YOUR FILES GO
     not share a results folder. On the first run you are asked where these
     should live. Answer with anything you like; the defaults are:
 
-        ~/.local/share/MeSH Workbench/data      downloads and databases
+        ~/.local/share/MPN/data      downloads and databases
                                                 THIS IS THE BIG ONE, ~52 GB
-        ~/Documents/MeSH Workbench              your results and figures
-        ~/.local/share/MeSH Workbench           settings and logs
+        ~/Documents/MPN              your results and figures
+        ~/.local/share/MPN           settings and logs
 
     The Folders tab shows the paths actually in use at any time.
 
 TO UNINSTALL
 
-    ./mesh-uninstall
+    ./mpn-uninstall
 
     That lists everything the program put outside this folder, tells you how
     much space each takes, and asks before removing anything. Then delete this
@@ -736,7 +736,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[1])
     ap.add_argument('--target', choices=sorted(TARGETS), default='linux')
     ap.add_argument('--all', action='store_true', help='build every target')
-    # Defaulted to ~/Documents/mesh_workbench_build, which is why the Linux and
+    # Defaulted to ~/Documents/mpn_build, which is why the Linux and
     # macOS tarballs ended up on a different drive from the Windows ones.
     ap.add_argument('--out', default=None,
                     help=f'where to write the bundle '

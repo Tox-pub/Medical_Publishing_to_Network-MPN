@@ -3,7 +3,7 @@
 On Linux the uninstaller ended with:
 
     The package itself is still installed. To remove it:
-        python3.12 -m pip uninstall mesh_aop_network
+        python3.12 -m pip uninstall mpn
 
 Both halves were wrong. `python3.12` came from Path(sys.executable).name, and
 inside a bundle that names an interpreter which exists only in the bundle - so
@@ -33,7 +33,7 @@ def ck(ok, msg, extra=''):
 
 def fake_bundle(box, launcher, exe_rel):
     """A bundle laid out the way the packaging scripts lay one out."""
-    root = os.path.join(box, 'MeSH-Workbench-3.2.10')
+    root = os.path.join(box, 'MPN-3.2.10')
     os.makedirs(os.path.join(root, 'app'), exist_ok=True)
     exe = os.path.join(root, exe_rel)
     os.makedirs(os.path.dirname(exe), exist_ok=True)
@@ -47,7 +47,7 @@ real_exe, real_platform = sys.executable, sys.platform
 
 print('=== 1. the command names the interpreter that actually exists ===')
 try:
-    root, exe = fake_bundle(box, 'MeSH Workbench', os.path.join('python', 'bin', 'python3.12'))
+    root, exe = fake_bundle(box, 'MPN', os.path.join('python', 'bin', 'python3.12'))
     sys.executable = exe
     hint = U.pip_hint()
     ck('python3.12 -m pip' != hint.split(os.sep)[-1][:len('python3.12 -m pip')]
@@ -60,7 +60,7 @@ try:
 
     spaced_box = os.path.join(box, 'has space')
     os.makedirs(spaced_box, exist_ok=True)
-    root2, exe2 = fake_bundle(spaced_box, 'MeSH Workbench',
+    root2, exe2 = fake_bundle(spaced_box, 'MPN',
                               os.path.join('python', 'bin', 'python3.12'))
     sys.executable = exe2
     ck(U.pip_hint().startswith('"'), f'a path with a space is quoted: {U.pip_hint()}')
@@ -69,7 +69,7 @@ finally:
 
 print('\n=== 2. a self-contained bundle is a folder to delete, not a pip command ===')
 try:
-    root, exe = fake_bundle(box, 'mesh-pipeline', os.path.join('python', 'bin', 'python3.12'))
+    root, exe = fake_bundle(box, 'mpn-pipeline', os.path.join('python', 'bin', 'python3.12'))
     sys.executable = exe
     ck(U.bundle_root() is not None, f'the bundle is recognised: {U.bundle_root()}')
     ck(str(U.bundle_root()) == root, 'and it is the folder holding the launcher',
@@ -90,7 +90,7 @@ finally:
 
 print('\n=== 3. Windows says Add/Remove, not a shell command ===')
 try:
-    root, exe = fake_bundle(box, 'MeSH Workbench.bat', os.path.join('python', 'python.exe'))
+    root, exe = fake_bundle(box, 'MPN.bat', os.path.join('python', 'python.exe'))
     sys.executable = exe
     sys.platform = 'win32'
     heading, lines = U.removal_instructions()
@@ -122,7 +122,7 @@ from mesh_aop import uninstall_cli                                 # noqa: E402
 cli_src = inspect.getsource(uninstall_cli.main)
 ck('removal_instructions' in cli_src, 'the console uninstaller uses it')
 ck('pip_hint()' not in cli_src, 'and no longer prints the bare hint')
-app_src = open('src/mesh_workbench/app.py', encoding='utf-8').read()
+app_src = open('src/mpn/app.py', encoding='utf-8').read()
 ck('removal_instructions' in app_src, 'the application dialog uses it')
 ck('U.pip_hint()' not in app_src, 'and no longer prints the bare hint')
 

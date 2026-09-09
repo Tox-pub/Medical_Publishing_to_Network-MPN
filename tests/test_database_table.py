@@ -19,7 +19,7 @@ import time
 sys.path.insert(0, 'src')
 
 import tkinter as tk                                               # noqa: E402
-from mesh_workbench.app import Workbench, _built_when               # noqa: E402
+from mpn.app import Workbench, _built_when               # noqa: E402
 
 FAILS = []
 

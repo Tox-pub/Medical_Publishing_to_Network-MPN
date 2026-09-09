@@ -100,7 +100,7 @@ ck(_keep_benchmark_input(absent, cfg, 'negative_control') == absent,
    'a path that does not exist is handed back unchanged')
 
 print('\n=== 5. the results screen claims the kept files for this project ===')
-from mesh_workbench.app import Workbench                            # noqa: E402
+from mpn.app import Workbench                            # noqa: E402
 
 for name, want in (('DAC_Mesh_ground_truth.xlsx', True),
                    ('DAC_Mesh_negative_control.csv', True),

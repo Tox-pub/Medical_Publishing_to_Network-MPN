@@ -1,9 +1,12 @@
-# MeSH Workbench — Help and reference
+# MPN — Help and reference
+
+**MPN** is *Medical Publishing to Network*. The full name introduces the
+software; `MPN` is used everywhere thereafter.
 
 This document is how the pipeline works, what every setting does, and what it
 produces.
 
-MeSH Workbench is a desktop **application** with a command-line pipeline behind
+MPN is a desktop **application** with a command-line pipeline behind
 it. Everything described here can be done from either. The application is
 validated on **Windows** and **Linux**.
 
@@ -83,7 +86,7 @@ data rather than from this document. See
 - [Data Acquisition & Prerequisites](#data-acquisition--prerequisites)
   - [1. The MeSH XML File (automatic)](#1-the-mesh-xml-file-automatic)
   - [2. Internet Connectivity & Disk Budget](#2-internet-connectivity--disk-budget)
-- [The Workbench Window](#the-workbench-window)
+- [The MPN Window](#the-mpn-window)
   - [Data setup](#data-setup)
   - [Settings](#settings)
   - [Before a run starts](#before-a-run-starts)
@@ -123,7 +126,7 @@ data rather than from this document. See
 - [Troubleshooting](#troubleshooting)
   - [Windows `MAX_PATH` / "No such file or directory" during install](#windows-maxpath--no-such-file-or-directory-during-install)
   - ["Activate.ps1 cannot be loaded ... running scripts is disabled"](#activateps1-cannot-be-loaded--running-scripts-is-disabled)
-  - ["Access is denied" running `mesh-pipeline` / `mesh-check-env`](#access-is-denied-running-mesh-pipeline--mesh-check-env)
+  - ["Access is denied" running `mpn-pipeline` / `mpn-check-env`](#access-is-denied-running-mpn-pipeline--mpn-check-env)
   - [`community` / `python-louvain` Namespace Collision](#community--python-louvain-namespace-collision)
   - [RAM Exhaustion on Large Networks](#ram-exhaustion-on-large-networks)
   - [SQLite Lock Errors on Network-Attached Storage](#sqlite-lock-errors-on-network-attached-storage)
@@ -162,7 +165,7 @@ These baseline and daily-update archives are the official NLM/NCBI PubMed releas
 
 ---
 
-## The Workbench Window
+## The MPN Window
 
 ### Data setup
 
@@ -620,7 +623,7 @@ The figure is written at the dpi and in the formats set under **Figures** in the
 The `--step benchmark` module evaluates how well the network's per-article relevance scores recover an external, curated set of "ground-truth" PMIDs (e.g. the bibliography of an authoritative OECD Adverse Outcome Pathway document). It is designed for the realistic situation here — a few dozen known-relevant papers hidden in a multi-million article candidate pool — and follows three principles: **validate the ground truth first, use metrics robust to incomplete relevance judgments, and quantify uncertainty against baselines.**
 
 ```bash
-mesh-pipeline --step benchmark
+mpn-pipeline --step benchmark
 ```
 
 ### Ground Truth
@@ -807,7 +810,7 @@ py -3.12 -m venv "$env:USERPROFILE\mesh_env"     # e.g. C:\Users\you\mesh_env
 
 Symptom: activating the virtual environment fails with `running scripts is disabled on this system` (a `PSSecurityException` / `UnauthorizedAccess`).
 
-Cause: Windows PowerShell's **execution policy** (often `Restricted` by default) blocks the `Activate.ps1` script. This only blocks the activation *script* — `python.exe` itself is unaffected. `mesh-check-env` detects this and prints the same guidance.
+Cause: Windows PowerShell's **execution policy** (often `Restricted` by default) blocks the `Activate.ps1` script. This only blocks the activation *script* — `python.exe` itself is unaffected. `mpn-check-env` detects this and prints the same guidance.
 
 Fix — enable local scripts once (no admin needed; works in all future windows):
 
@@ -822,7 +825,7 @@ If a corporate policy blocks even `CurrentUser`, set it per-window instead: `Set
 & "$env:USERPROFILE\mesh_env\Scripts\python.exe" -m mesh_aop.cli --step all --interactive
 ```
 
-### "Access is denied" running `mesh-pipeline` / `mesh-check-env`
+### "Access is denied" running `mpn-pipeline` / `mpn-check-env`
 
 Symptom: the console-script launchers fail with *Access is denied* / `ApplicationFailedException`, even though `python.exe` itself works.
 
@@ -844,7 +847,7 @@ pip uninstall community python-louvain -y
 pip install python-louvain
 ```
 
-The `mesh-check-env --auto` script detects and resolves this automatically.
+The `mpn-check-env --auto` script detects and resolves this automatically.
 
 ### RAM Exhaustion on Large Networks
 
@@ -858,7 +861,7 @@ Setting `calculate_full_centrality: false` does **not** disable centrality or pr
 
 ### SQLite Lock Errors on Network-Attached Storage
 
-The `baseline_manager` uses a verified safe-transfer architecture specifically to handle write failures on NAS and cloud-synced directories (OneDrive, Dropbox, etc.). If you still encounter lock errors, ensure no other process (e.g., a cloud-sync agent) has the `.db` file open, then re-run `mesh-pipeline --step process`.
+The `baseline_manager` uses a verified safe-transfer architecture specifically to handle write failures on NAS and cloud-synced directories (OneDrive, Dropbox, etc.). If you still encounter lock errors, ensure no other process (e.g., a cloud-sync agent) has the `.db` file open, then re-run `mpn-pipeline --step process`.
 
 ### Convergence Warnings for Eigenvector Centrality
 
@@ -938,7 +941,7 @@ Mesh-Network-Analysis/
 If you use this software, or a network it produced, in published work, please cite it:
 
 ```
-Sax, J. (2026). MeSH Workbench: MeSH co-occurrence concept networks for Adverse Outcome Pathways (Version 3.2.10) [Computer software]. https://github.com/Tox-pub/Mesh-Network-Analysis
+Sax, J. (2026). MPN: MeSH co-occurrence concept networks for Adverse Outcome Pathways (Version 3.2.10) [Computer software]. https://github.com/Tox-pub/Mesh-Network-Analysis
 ```
 
 Archived release: [10.5281/zenodo.18662959](https://doi.org/10.5281/zenodo.18662959)

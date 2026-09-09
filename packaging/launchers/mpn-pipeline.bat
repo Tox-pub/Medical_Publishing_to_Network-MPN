@@ -1,10 +1,10 @@
 @echo off
-REM  The pipeline, without the window. Mirrors the mesh-pipeline script in the
+REM  The pipeline, without the window. Mirrors the mpn-pipeline script in the
 REM  Linux and macOS bundles, so the same commands work on all three.
 REM
 REM  Every argument is passed through unchanged:
-REM      mesh-pipeline.bat --step viz
-REM      mesh-pipeline.bat --step all --interactive
+REM      mpn-pipeline.bat --step viz
+REM      mpn-pipeline.bat --step all --interactive
 REM
 REM  If this file will not run, invoke the module directly - it is the same
 REM  command with nothing in front of it:

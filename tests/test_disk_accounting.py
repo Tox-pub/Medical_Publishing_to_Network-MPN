@@ -20,7 +20,7 @@ sys.path.insert(0, 'src')
 
 import tkinter as tk                                               # noqa: E402
 from mesh_aop.config_parser import MeshConfig                       # noqa: E402
-from mesh_workbench.app import Workbench, _size_gb                  # noqa: E402
+from mpn.app import Workbench, _size_gb                  # noqa: E402
 
 FAILS = []
 
@@ -151,7 +151,7 @@ for root, _d, files in os.walk('src'):
 ck(not stale, 'no source file still says 44 GB', f'found in {stale}')
 
 print('\n=== 7. the accumulation can be purged, safely ===')
-from mesh_workbench import app as appmod                            # noqa: E402
+from mpn import app as appmod                            # noqa: E402
 
 # sidecars must go with their parent: a stale write-ahead log describes a
 # database that no longer exists, and SQLite replays it into the next one.

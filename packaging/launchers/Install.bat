@@ -1,6 +1,6 @@
 @echo off
 REM ---------------------------------------------------------------------------
-REM  Install MeSH Workbench for the current user.
+REM  Install MPN for the current user.
 REM
 REM  Nothing here is compiled. This copies the folder into place, makes the
 REM  shortcuts, and registers the program so it appears in Add/Remove Programs -
@@ -20,7 +20,7 @@ REM    Install.bat /S                  silent - no prompts, for deployment
 REM ---------------------------------------------------------------------------
 setlocal EnableExtensions
 
-set "APPNAME=MeSH Workbench"
+set "APPNAME=MPN"
 set "APPVER=3.1.0"
 set "SRC=%~dp0"
 set "TARGET="
@@ -73,7 +73,7 @@ REM  copy must not have it, or settings and results would be written beside the
 REM  program and shared between accounts instead of kept per user.
 if exist "%TARGET%\portable.marker" del /q "%TARGET%\portable.marker"
 
-set "ICON=%TARGET%\app\mesh_workbench\assets\mesh_workbench.ico"
+set "ICON=%TARGET%\app\mpn\assets\mpn.ico"
 set "PYW=%TARGET%\python\pythonw.exe"
 set "LAUNCH=%TARGET%\app\launch.py"
 
@@ -93,7 +93,7 @@ echo   Desktop shortcut created.
 :register
 REM  Registering under HKCU is what puts the program in Settings ^> Apps. This
 REM  is the per-user hive, so it needs no elevation.
-set "KEY=HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\MeSHWorkbench"
+set "KEY=HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\MPN"
 reg add "%KEY%" /v DisplayName     /t REG_SZ /d "%APPNAME%" /f >nul
 reg add "%KEY%" /v DisplayVersion  /t REG_SZ /d "%APPVER%" /f >nul
 reg add "%KEY%" /v Publisher       /t REG_SZ /d "Karolinska Institutet" /f >nul

@@ -11,7 +11,7 @@ the same superseded tree on different drives.
 
 So there is one answer now, and it is enforced rather than preferred:
 
-    D:\\mesh_workbench_build
+    D:\\mpn_build
 
 If D: is not attached, the build STOPS. It does not quietly pick somewhere
 else. Falling back is what scattered the output in the first place, and the
@@ -26,7 +26,7 @@ import os
 import sys
 
 #: The only location a build writes to unless it is told otherwise.
-BUILD_ROOT = r'D:\mesh_workbench_build'
+BUILD_ROOT = r'D:\mpn_build'
 
 _ENV = 'MESH_BUILD_OUT'
 

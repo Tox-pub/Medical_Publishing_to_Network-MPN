@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  MeSH Workbench - Windows Installer package (WiX v4/v5).
+  MPN - Windows Installer package (WiX v4/v5).
 
   Why an MSI and nothing else: the program that performs an MSI install is
   msiexec.exe, which ships with Windows and is signed by Microsoft. No new
@@ -22,7 +22,7 @@
      xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui"
      xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
 
-  <?define AppName = "MeSH Workbench" ?>
+  <?define AppName = "MPN" ?>
   <?define AppVersion = "3.2.10" ?>
 
   <Package Name="$(AppName)"
@@ -36,7 +36,7 @@
     <MajorUpgrade DowngradeErrorMessage="A newer version of $(AppName) is already installed." />
     <MediaTemplate EmbedCab="yes" />
 
-    <Icon Id="AppIcon" SourceFile="$(PortableDir)\app\mesh_workbench\assets\mesh_workbench.ico" />
+    <Icon Id="AppIcon" SourceFile="$(PortableDir)\app\mpn\assets\mpn.ico" />
     <Property Id="ARPPRODUCTICON" Value="AppIcon" />
     <Property Id="ARPURLINFOABOUT" Value="https://github.com/Tox-pub/Mesh-Network-Analysis" />
     <!-- Without this the Add/Remove Programs entry shows a blank location and

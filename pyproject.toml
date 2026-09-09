@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "mesh_aop_network"
+name = "mpn"
 version = "3.2.10"
-description = "Pipeline and desktop workbench for MeSH term AOP network generation and analysis"
+description = "MPN (Medical Publishing to Network): pipeline and desktop application for building MeSH co-occurrence concept networks from PubMed"
 # Validated on Python 3.11-3.13; capped at <3.14 to match environment.yml and the
 # validated stack (node2vec is vendored in node2vec_embedding.py, so 3.13 is fully
 # supported). Raise the cap deliberately to adopt a newer, untested Python.
@@ -36,24 +36,24 @@ dependencies = [
 ]
 
 [project.scripts]
-mesh-check-env = "mesh_aop.check_env:main"
-mesh-pipeline = "mesh_aop.cli:main"
+mpn-check-env = "mesh_aop.check_env:main"
+mpn-pipeline = "mesh_aop.cli:main"
 # Desktop front-end. Uses only tkinter from the standard library, so it adds no
 # dependency beyond what the pipeline already requires.
-mesh-workbench = "mesh_workbench.__main__:main"
+mpn = "mpn.__main__:main"
 # Removal of the program and everything it downloaded or built. Lives in
 # mesh_aop so it works without tkinter, on a headless machine.
-mesh-uninstall = "mesh_aop.uninstall_cli:main"
+mpn-uninstall = "mesh_aop.uninstall_cli:main"
 
 # Explicit src-layout package discovery. setuptools already auto-discovers both
-# packages under src/ - mesh_aop and mesh_workbench - but stating it makes
+# packages under src/ - mesh_aop and mpn - but stating it makes
 # editable installs deterministic across environments (e.g. cloud/Colab, where
 # auto-discovery has occasionally been flaky). Both must be found: without
-# mesh_workbench the mesh-workbench entry point installs and then fails to import.
+# mpn the mpn entry point installs and then fails to import.
 [tool.setuptools.packages.find]
 where = ["src"]
 
 # The window icon is data, not code, so it is not picked up by package discovery.
 # Without this a pip install has no icon and the window falls back to Tk's.
 [tool.setuptools.package-data]
-mesh_workbench = ["assets/*.ico", "assets/*.png"]
+mpn = ["assets/*.ico", "assets/*.png"]

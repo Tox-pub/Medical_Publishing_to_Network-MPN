@@ -82,7 +82,7 @@ class PipelineRunner:
     def __init__(self, repo_dir, python_exe=None, config_path=None):
         self.repo_dir = repo_dir
         self.python_exe = python_exe or sys.executable
-        # The settings file this Workbench writes. Handed to every run as
+        # The settings file the application writes. Handed to every run as
         # --config so the pipeline reads the file the user just saved, rather
         # than resolving a bare 'mesh_config.json' against whatever directory
         # the process was started in - which on an installed copy is a

@@ -1,13 +1,13 @@
-# MeSH Workbench — Command-Line Guide
+# MPN (Medical Publishing to Network) — Command-Line Guide
 
 This document is how to run the pipeline from a shell, and how to work on the
 source. It ships with the source package.
 
-**Most people do not need it.** MeSH Workbench is a desktop application, and
+**Most people do not need it.** MPN is a desktop application, and
 everything the pipeline does can be driven from its window. If that is what you
 want, see [INSTALL.md](INSTALL.md) to install it and
 [HELP.md](HELP.md) for the manual — HELP.md is also what the application's
-**Help → MeSH Workbench Manual** entry opens.
+**Help → MPN Manual** entry opens.
 
 Use this document if you are scripting runs, working on the code, or running on
 a machine with no desktop.
@@ -37,7 +37,7 @@ system Python, no virtual environment and no `pip install`. Nothing in the
 section after this one applies to a downloaded build; it covers installing from
 source.
 
-Each build provides a launcher named `mesh-pipeline`, placed beside the
+Each build provides a launcher named `mpn-pipeline`, placed beside the
 application in the program folder. It accepts every flag listed under
 [CLI Flags](#cli-flags) and passes them through unchanged.
 
@@ -47,22 +47,22 @@ Extract the portable zip, or install the `.msi`. Open a shell in the program
 folder and run:
 
 ```powershell
-mesh-pipeline.bat --step viz
-mesh-pipeline.bat --step all --interactive
+mpn-pipeline.bat --step viz
+mpn-pipeline.bat --step all --interactive
 ```
 
 From another directory, give the full path in quotes — the folder name contains
 a space:
 
 ```powershell
-& "C:\path\to\MeshWorkbench\mesh-pipeline.bat" --step viz
+& "C:\path\to\MPN\mpn-pipeline.bat" --step viz
 ```
 
 **If the launcher does not run**, call the module directly. The command is
 identical in effect; the launcher adds nothing but the path lookup:
 
 ```powershell
-& "C:\path\to\MeshWorkbench\python\python.exe" -m mesh_aop.cli --step viz
+& "C:\path\to\MPN\python\python.exe" -m mesh_aop.cli --step viz
 ```
 
 That second form also applies where policy blocks `.bat` execution, since it
@@ -73,8 +73,8 @@ invokes the bundled interpreter rather than a script.
 Extract the tarball, change into the extracted folder, and run:
 
 ```bash
-./mesh-pipeline --step viz
-./mesh-pipeline --step all --interactive
+./mpn-pipeline --step viz
+./mpn-pipeline --step all --interactive
 ```
 
 The first invocation unpacks the bundled wheels, which takes about a minute and
@@ -85,7 +85,7 @@ transit — extracting on Windows or copying through a FAT32 or exFAT volume doe
 this. Restore it:
 
 ```bash
-chmod +x mesh-pipeline "MeSH Workbench" mesh-uninstall python/bin/python3.12
+chmod +x mpn-pipeline "MPN" mpn-uninstall python/bin/python3.12
 ```
 
 **If the launcher still does not run**, call the module directly. Run the
@@ -141,7 +141,7 @@ is needed. What follows is for working on the source.
 
 This installs the **command-line pipeline** from source. To install the
 application instead, see [INSTALL.md](INSTALL.md); the application is described
-under [The Workbench Window](HELP.md#the-workbench-window) below.
+under [The MPN Window](HELP.md#the-mpn-window) below.
 
 The commands assume **PowerShell** on Windows or **bash** on Linux and macOS.
 Adjust the paths and the activation command for another shell.
@@ -161,11 +161,11 @@ Several dependencies ship very long filenames that overflow the 260-character
 Verify the entry points resolve:
 
 ```bash
-mesh-pipeline --version
-mesh-check-env
+mpn-pipeline --version
+mpn-check-env
 ```
 
-`mesh-check-env` also reports missing OS-level rendering libraries.
+`mpn-check-env` also reports missing OS-level rendering libraries.
 
 ---
 
@@ -173,11 +173,11 @@ mesh-check-env
 
 The pipeline is entirely modular and controlled via a terminal interface. Configuration is handled by an interactive command-line wizard, allowing users to modify runtime parameters safely without touching source code.
 
-> **Invocation by platform.** The examples below use the `mesh-pipeline` command, which works on **macOS/Linux** (and on Windows after activating the venv). On **Windows**, if activation or the `.exe` launcher is blocked, use the equivalent module form with the venv's Python by full path — it behaves identically:
+> **Invocation by platform.** The examples below use the `mpn-pipeline` command, which works on **macOS/Linux** (and on Windows after activating the venv). On **Windows**, if activation or the `.exe` launcher is blocked, use the equivalent module form with the venv's Python by full path — it behaves identically:
 > ```powershell
 > & "$env:USERPROFILE\mesh_env\Scripts\python.exe" -m mesh_aop.cli --step all --interactive
 > ```
-> i.e. replace `mesh-pipeline` with `& "$env:USERPROFILE\mesh_env\Scripts\python.exe" -m mesh_aop.cli` in any command. Always run from the project root so it finds `mesh_config.json` and the `data/` folders.
+> i.e. replace `mpn-pipeline` with `& "$env:USERPROFILE\mesh_env\Scripts\python.exe" -m mesh_aop.cli` in any command. Always run from the project root so it finds `mesh_config.json` and the `data/` folders.
 
 ### CLI Flags
 
@@ -194,7 +194,7 @@ The pipeline is entirely modular and controlled via a terminal interface. Config
 To construct a network from the ground up, execute the `all` step. The `--interactive` flag invokes the wizard.
 
 ```bash
-mesh-pipeline --step all --interactive
+mpn-pipeline --step all --interactive
 
 ```
 
@@ -202,12 +202,12 @@ mesh-pipeline --step all --interactive
 
 If upstream dependencies are already built, specific modules can be executed in isolation.
 
-* **Step 0 & 1:** `mesh-pipeline --step process --interactive` (Database Compilation & MeSH processing)
-* **Step 2:** `mesh-pipeline --step data_ops --interactive` (Entrez API Collection)
-* **Step 3:** `mesh-pipeline --step network --interactive` (Topology & Filtering)
-* **Step 3.5:** `mesh-pipeline --step secondary --interactive` (Targeted Export Analysis)
-* **Step 4:** `mesh-pipeline --step viz --interactive` (Biological Figure Generation)
-* **Step 5:** `mesh-pipeline --step benchmark` (Ground-Truth Validation & Performance Benchmarking)
+* **Step 0 & 1:** `mpn-pipeline --step process --interactive` (Database Compilation & MeSH processing)
+* **Step 2:** `mpn-pipeline --step data_ops --interactive` (Entrez API Collection)
+* **Step 3:** `mpn-pipeline --step network --interactive` (Topology & Filtering)
+* **Step 3.5:** `mpn-pipeline --step secondary --interactive` (Targeted Export Analysis)
+* **Step 4:** `mpn-pipeline --step viz --interactive` (Biological Figure Generation)
+* **Step 5:** `mpn-pipeline --step benchmark` (Ground-Truth Validation & Performance Benchmarking)
 
 ---
 

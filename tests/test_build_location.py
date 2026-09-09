@@ -29,7 +29,7 @@ def ck(ok, msg, extra=''):
 
 
 print('=== 1. there is one location, and it is D: ===')
-ck(build_location.BUILD_ROOT == r'D:\mesh_workbench_build',
+ck(build_location.BUILD_ROOT == r'D:\mpn_build',
    f'BUILD_ROOT is {build_location.BUILD_ROOT}')
 
 print('\n=== 2. an explicit --out is honoured without argument ===')
@@ -78,7 +78,7 @@ ck("os.path.join(HERE, 'portable')" not in src,
 ck('build_location.resolve' in src, 'it asks build_location instead')
 
 unix = open('packaging/build_unix_bundle.py', encoding='utf-8').read()
-ck("'Documents', 'mesh_workbench_build'" not in unix,
+ck("'Documents', 'mpn_build'" not in unix,
    'build_unix_bundle.py no longer defaults to ~/Documents')
 ck('build_location.resolve' in unix, 'it asks build_location too')
 
@@ -95,7 +95,7 @@ for script in ('build_portable_windows.py', 'build_unix_bundle.py',
     ok = r.returncode == 0
     ck(ok, f'{script:<28} --help works', (r.stderr or '')[:160])
     if ok:
-        ck('mesh_workbench_build' in r.stdout,
+        ck('mpn_build' in r.stdout,
            f'{script:<28} names the shared location in its help')
 
 import shutil                                                       # noqa: E402

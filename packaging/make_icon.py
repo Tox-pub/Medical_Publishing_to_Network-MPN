@@ -11,7 +11,7 @@ and the nodes merge. Drawing per size lets the stroke weights and the node radii
 stay legible where it matters, which is the taskbar.
 
 Run:  python packaging/make_icon.py
-Writes src/mesh_workbench/assets/mesh_workbench.ico (and PNG previews).
+Writes src/mpn/assets/mpn.ico (and PNG previews).
 """
 
 import math
@@ -24,7 +24,7 @@ except ImportError:
     sys.exit('Pillow is required: python -m pip install pillow')
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT_DIR = os.path.join(os.path.dirname(HERE), 'src', 'mesh_workbench', 'assets')
+OUT_DIR = os.path.join(os.path.dirname(HERE), 'src', 'mpn', 'assets')
 SIZES = (16, 24, 32, 48, 64, 128, 256)
 
 BG = (27, 42, 74)            # deep navy plate
@@ -79,13 +79,13 @@ def draw(size):
 def main():
     os.makedirs(OUT_DIR, exist_ok=True)
     frames = [draw(s) for s in SIZES]
-    ico = os.path.join(OUT_DIR, 'mesh_workbench.ico')
+    ico = os.path.join(OUT_DIR, 'mpn.ico')
     # Pillow writes every supplied size into the .ico when they are passed as
     # append_images; a single image would leave Windows to rescale.
     frames[-1].save(ico, format='ICO',
                     sizes=[(s, s) for s in SIZES],
                     append_images=frames[:-1])
-    png = os.path.join(OUT_DIR, 'mesh_workbench.png')
+    png = os.path.join(OUT_DIR, 'mpn.png')
     frames[-1].save(png, format='PNG')          # for Linux .desktop entries
     print(f'  wrote {ico}  ({os.path.getsize(ico):,} bytes, {len(SIZES)} sizes)')
     print(f'  wrote {png}  ({os.path.getsize(png):,} bytes)')

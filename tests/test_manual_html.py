@@ -167,7 +167,7 @@ for heading, expect in (
 
 print('\n=== 5. the application falls back rather than failing ===')
 import inspect                                                      # noqa: E402
-from mesh_workbench.app import Workbench                            # noqa: E402
+from mpn.app import Workbench                            # noqa: E402
 
 src = inspect.getsource(Workbench.open_doc)
 ck('_open_as_html' in src, 'the browser is tried first')

@@ -3,7 +3,7 @@
 An MSI uninstall hung at "1 minute remaining" indefinitely. [INSTALLFOLDER]
 always ends in a backslash, so &quot;[INSTALLFOLDER]&quot; emitted
 
-    --project "C:\\...\\MeSH Workbench\\"
+    --project "C:\\...\\MPN\\"
 
 and Windows reads \\" as an ESCAPED QUOTE. The string never closed, --yes and
 --keep-data were swallowed into the --project value, and the uninstaller
@@ -73,7 +73,7 @@ def parsed(argv):
     return a
 
 
-FOLDER = r'C:\Users\someone\AppData\Local\Programs\MeSH Workbench'
+FOLDER = r'C:\Users\someone\AppData\Local\Programs\MPN'
 
 print('=== 1. the MSI, whose property always ends in a backslash ===')
 wxs = open('packaging/windows_msi.wxs', encoding='utf-8').read()
@@ -125,10 +125,10 @@ for name in ('Uninstall.bat', 'Install.bat'):
            f'{a2.project!r}')
 
 print('\n=== 3b. the command line has a launcher on every platform ===')
-# The Unix bundles have shipped mesh-pipeline since they existed; Windows had
+# The Unix bundles have shipped mpn-pipeline since they existed; Windows had
 # no equivalent, so the pipeline was present and reachable only by naming the
 # interpreter and the module by hand - and COMMAND-LINE.md documented neither.
-bat = 'packaging/launchers/mesh-pipeline.bat'
+bat = 'packaging/launchers/mpn-pipeline.bat'
 ck(os.path.exists(bat), f'{bat} exists')
 if os.path.exists(bat):
     body = open(bat, encoding='utf-8').read()
@@ -148,10 +148,10 @@ if os.path.exists(bat):
        'and says so plainly when the tree was extracted incompletely')
 
 unix = open('packaging/build_unix_bundle.py', encoding='utf-8').read()
-ck("'mesh-pipeline'" in unix, 'the Unix bundles still ship theirs')
+ck("'mpn-pipeline'" in unix, 'the Unix bundles still ship theirs')
 
 cli_doc = open('COMMAND-LINE.md', encoding='utf-8').read()
-ck('mesh-pipeline.bat' in cli_doc, 'the guide names the Windows launcher')
+ck('mpn-pipeline.bat' in cli_doc, 'the guide names the Windows launcher')
 ck('-m mesh_aop.cli' in cli_doc, 'and gives the fallback if it will not run')
 ck('chmod +x' in cli_doc, 'and the Unix fix for a lost executable bit')
 

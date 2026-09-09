@@ -1,9 +1,9 @@
 # Build one self-contained package per operating system, and prove each one
 # runs on the system it targets.
 #
-#   MeSH-Workbench-<version>-windows.msi          double-click
-#   MeSH-Workbench-<version>-linux-x86_64.tar.gz  extract, ./"MeSH Workbench"
-#   MeSH-Workbench-<version>-macos-arm64.tar.gz   extract, ./"MeSH Workbench"
+#   MPN-<version>-windows.msi          double-click
+#   MPN-<version>-linux-x86_64.tar.gz  extract, ./"MPN"
+#   MPN-<version>-macos-arm64.tar.gz   extract, ./"MPN"
 #
 # Every one carries its own Python. Nothing needs installing first - no system
 # Python, no python3-tk, no administrator rights.
@@ -70,7 +70,7 @@ jobs:
         shell: bash
         run: |
           set -eu
-          tree=build/MeshWorkbench
+          tree=build/MPN
           du -sm "$tree" | awk '{print "  assembled tree: " $1 " MB"}'
           # An interpreter with no libraries is about 20 MB; a real one is 300+.
           size=$(du -sm "$tree" | cut -f1)
@@ -84,7 +84,7 @@ jobs:
           import statsmodels, seaborn, plotly, Bio, community, openpyxl, tqdm
           import sqlite3, tkinter
           import sys; sys.path.insert(0, r'$PWD/$tree/app')
-          import mesh_aop, mesh_workbench
+          import mesh_aop, mpn
           print('  every dependency imports from the bundled interpreter')
           print('  mesh_aop', mesh_aop.__version__)
           "
@@ -122,7 +122,7 @@ jobs:
       # explicit as well, because the next person to copy this line should see
       # that it matters.
       - name: Build the MSI
-        run: python packaging/build_msi_windows.py --portable "$env:GITHUB_WORKSPACE\build\MeshWorkbench" --out "$env:GITHUB_WORKSPACE\build"
+        run: python packaging/build_msi_windows.py --portable "$env:GITHUB_WORKSPACE\build\MPN" --out "$env:GITHUB_WORKSPACE\build"
         shell: pwsh
 
       - name: Name it for the platform, and check its size
@@ -130,7 +130,7 @@ jobs:
         run: |
           set -eu
           ver=$(grep -m1 '^version' pyproject.toml | cut -d'"' -f2)
-          msi="MeSH-Workbench-${ver}-windows.msi"
+          msi="MPN-${ver}-windows.msi"
           mv build/*.msi "$msi"
           echo "VER=$ver" >> "$GITHUB_ENV"
           mb=$(du -m "$msi" | cut -f1)
@@ -148,14 +148,14 @@ jobs:
       # an installer that is not an empty shell.
       - name: Inspect the Windows build
         run: |
-          python packaging/verify_windows_bundle.py build/MeshWorkbench
-          python packaging/verify_windows_bundle.py "MeSH-Workbench-${{ env.VER }}-windows.msi"
+          python packaging/verify_windows_bundle.py build/MPN
+          python packaging/verify_windows_bundle.py "MPN-${{ env.VER }}-windows.msi"
         continue-on-error: false
 
       - uses: actions/upload-artifact@v5
         with:
           name: windows
-          path: 'MeSH-Workbench-*-windows.msi'
+          path: 'MPN-*-windows.msi'
           if-no-files-found: error
 
   unix:
@@ -218,14 +218,14 @@ jobs:
         run: |
           set -eux
           mkdir -p /tmp/run && tar -xzf build/*.tar.gz -C /tmp/run
-          cd /tmp/run/MeSH-Workbench-*
+          cd /tmp/run/MPN-*
 
           # The interpreter must work before anything else can.
           ./python/bin/python3.12 -c "import sys; print(sys.version)"
 
           # First run: unpacks the wheels offline. This is the step that would
           # fail on a missing setuptools or a wheel for the wrong platform.
-          ./mesh-pipeline --version
+          ./mpn-pipeline --version
 
           # Every dependency the pipeline actually imports.
           PYTHONPATH="$PWD/app/src" ./python/bin/python3.12 - <<'PY'
@@ -236,7 +236,7 @@ jobs:
                     'sqlite3', 'tkinter'):
               importlib.import_module(m)
               print('  ok', m)
-          import mesh_aop, mesh_workbench
+          import mesh_aop, mpn
           print('application imports fine')
           PY
 
@@ -246,7 +246,7 @@ jobs:
         if: matrix.target == 'linux'
         run: |
           sudo apt-get update && sudo apt-get install -y xvfb
-          cd /tmp/run/MeSH-Workbench-*
+          cd /tmp/run/MPN-*
           PYTHONPATH="$PWD/app/src" xvfb-run -a ./python/bin/python3.12 - <<'PY'
           import tkinter as tk
           r = tk.Tk(); r.withdraw()
@@ -257,7 +257,7 @@ jobs:
       - uses: actions/upload-artifact@v5
         with:
           name: ${{ matrix.label }}
-          path: 'build/MeSH-Workbench-*.tar.gz'
+          path: 'build/MPN-*.tar.gz'
 
   publish:
     needs: [windows, unix]
@@ -281,12 +281,12 @@ jobs:
             | System | File |
             | :--- | :--- |
             | Windows | `...-windows.msi` - double-click |
-            | Linux | `...-linux-x86_64.tar.gz` - extract, then `./"MeSH Workbench"` |
-            | macOS (Apple silicon) | `...-macos-arm64.tar.gz` - extract, then `./"MeSH Workbench"` |
+            | Linux | `...-linux-x86_64.tar.gz` - extract, then `./"MPN"` |
+            | macOS (Apple silicon) | `...-macos-arm64.tar.gz` - extract, then `./"MPN"` |
 
             **macOS users:** the download is unsigned, so macOS quarantines it.
             The launcher clears that itself on first run - no password, no Apple
             account, nothing to pay. Open Terminal, `cd` to the extracted folder
-            and run `./"MeSH Workbench"`. If you would rather do it by hand:
+            and run `./"MPN"`. If you would rather do it by hand:
 
                 xattr -dr com.apple.quarantine "/path/to/the/folder"

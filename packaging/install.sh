@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 #
-# install.sh - install MeSH Workbench on macOS or Linux.
+# install.sh - install MPN on macOS or Linux.
 #
 # There is no compiled binary and nothing to sign. The application is Python,
 # so this creates a private virtual environment, installs the package into it,
 # and puts a launcher where the desktop expects to find one:
 #
-#   Linux   ~/.local/share/applications/mesh-workbench.desktop   (appears in the
+#   Linux   ~/.local/share/applications/mpn.desktop   (appears in the
 #           application menu, with the icon)
-#   macOS   /Applications/MeSH Workbench.app                     (a real bundle,
+#   macOS   /Applications/MPN.app                     (a real bundle,
 #           launchable from Finder and Spotlight)
 #
 # Everything goes under the user's own home directory, so no administrator
@@ -22,8 +22,8 @@
 #
 set -euo pipefail
 
-APP_NAME="MeSH Workbench"
-SLUG="mesh-workbench"
+APP_NAME="MPN"
+SLUG="mpn"
 MIN_MINOR=11          # requires-python in pyproject.toml is >=3.11,<3.14
 MAX_MINOR=13
 
@@ -56,11 +56,11 @@ if [ "$UNINSTALL" = "1" ]; then
     echo "Removing $APP_NAME"
     # The application's own uninstaller knows about downloaded data and caches,
     # which live outside this directory; run it before the environment goes.
-    if [ -x "$PREFIX/venv/bin/mesh-uninstall" ]; then
-        "$PREFIX/venv/bin/mesh-uninstall" --list || true
+    if [ -x "$PREFIX/venv/bin/mpn-uninstall" ]; then
+        "$PREFIX/venv/bin/mpn-uninstall" --list || true
         echo
         echo "  To remove downloaded data and results as well, run:"
-        echo "    $PREFIX/venv/bin/mesh-uninstall"
+        echo "    $PREFIX/venv/bin/mpn-uninstall"
         echo "  (do that first if you want it - the command disappears with the next step)"
         echo
         printf "  Continue removing the application? [y/N] "
@@ -121,11 +121,11 @@ mkdir -p "$PREFIX"
 echo "  resolving dependencies (this takes a few minutes the first time)"
 "$PREFIX/venv/bin/python" -m pip install --quiet "$REPO"
 
-BIN="$PREFIX/venv/bin/mesh-workbench"
+BIN="$PREFIX/venv/bin/mpn"
 [ -x "$BIN" ] || { echo "install finished but $BIN is missing" >&2; exit 1; }
 
-ICON_SRC="$REPO/src/mesh_workbench/assets/mesh_workbench.png"
-ICON="$PREFIX/mesh_workbench.png"
+ICON_SRC="$REPO/src/mpn/assets/mpn.png"
+ICON="$PREFIX/mpn.png"
 [ -f "$ICON_SRC" ] && cp "$ICON_SRC" "$ICON"
 
 if [ "$PLATFORM" = linux ]; then
@@ -154,7 +154,7 @@ else
 <plist version="1.0"><dict>
   <key>CFBundleName</key><string>$APP_NAME</string>
   <key>CFBundleDisplayName</key><string>$APP_NAME</string>
-  <key>CFBundleIdentifier</key><string>se.ki.meshworkbench</string>
+  <key>CFBundleIdentifier</key><string>se.ki.mpn</string>
   <key>CFBundleVersion</key><string>3.1.0</string>
   <key>CFBundleShortVersionString</key><string>3.1.0</string>
   <key>CFBundleExecutable</key><string>run</string>
@@ -174,7 +174,7 @@ Installed.
 
   Launch it        from your application menu, or run:
                      $BIN
-  Command line     $PREFIX/venv/bin/mesh-pipeline --help
+  Command line     $PREFIX/venv/bin/mpn-pipeline --help
   Remove it        $0 --uninstall
 
 Settings and logs live under your user profile; results and data are chosen

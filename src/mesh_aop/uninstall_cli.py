@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-uninstall_cli.py - `mesh-uninstall`, the terminal front-end to uninstall.py.
+uninstall_cli.py - `mpn-uninstall`, the terminal front-end to uninstall.py.
 
 Identical behaviour on Windows, macOS and Linux. It shows what is on the machine
 before asking anything, defaults to leaving results alone, and refuses to guess:
@@ -43,8 +43,8 @@ def _print_inventory(items):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(
-        prog='mesh-uninstall',
-        description='Remove MeSH Workbench and the data it downloaded or built.')
+        prog='mpn-uninstall',
+        description='Remove MPN and the data it downloaded or built.')
     ap.add_argument('--project', default=None,
                     help='Project directory (default: the current directory).')
     ap.add_argument('--list', action='store_true',
@@ -66,7 +66,7 @@ def main(argv=None):
     portable = U.is_portable(root)
     items = U.inventory(root)
 
-    print(f'\nMeSH Workbench - uninstall\n  project: {root}')
+    print(f'\nMPN - uninstall\n  project: {root}')
     _print_inventory(items)
     total = sum(i.bytes for i in items)
     print(f'\n  {len(items)} item(s), {_fmt(total)} in total.')

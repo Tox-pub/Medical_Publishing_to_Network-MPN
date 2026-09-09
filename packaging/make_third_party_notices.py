@@ -106,7 +106,7 @@ def build(bundle):
     lines = [
         '# Third-party notices',
         '',
-        'MeSH Workbench is distributed as a self-contained bundle: the installer '
+        'MPN is distributed as a self-contained bundle: the installer '
         'carries its own Python interpreter and every library it needs, as '
         'prebuilt wheels, unmodified from their published releases.',
         '',
@@ -117,7 +117,7 @@ def build(bundle):
         'python packaging/make_third_party_notices.py <bundle.tar.gz>',
         '```',
         '',
-        'MeSH Workbench itself is MIT licensed; see [LICENSE](LICENSE).',
+        'MPN itself is MIT licensed; see [LICENSE](LICENSE).',
         '',
         '---',
         '',

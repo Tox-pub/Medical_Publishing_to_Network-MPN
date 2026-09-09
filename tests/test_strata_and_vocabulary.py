@@ -184,8 +184,8 @@ ck(guides.ANNOTATION_GUIDE_NAME in guides.ANNOTATION_GUIDE_NAMES
 
 print('\n=== 12. the Stop words tab, and its sixteen checkboxes ===')
 import tkinter as tk                                                # noqa: E402
-from mesh_workbench import settings_schema as sschema               # noqa: E402
-from mesh_workbench.app import Workbench                            # noqa: E402
+from mpn import settings_schema as sschema               # noqa: E402
+from mpn.app import Workbench                            # noqa: E402
 
 names = [n for n, _f in sschema.TABS]
 ck('Stop words' in names, f'the tab exists: {names}')

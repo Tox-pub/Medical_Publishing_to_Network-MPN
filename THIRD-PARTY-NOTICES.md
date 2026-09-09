@@ -1,6 +1,6 @@
 # Third-party notices
 
-MeSH Workbench is distributed as a self-contained bundle: the installer carries its own Python interpreter and every library it needs, as prebuilt wheels, unmodified from their published releases.
+MPN is distributed as a self-contained bundle: the installer carries its own Python interpreter and every library it needs, as prebuilt wheels, unmodified from their published releases.
 
 This file lists what those are. It is generated from the wheels a built bundle actually contains — not from a development environment — by
 
@@ -8,7 +8,7 @@ This file lists what those are. It is generated from the wheels a built bundle a
 python packaging/make_third_party_notices.py <bundle.tar.gz>
 ```
 
-MeSH Workbench itself is MIT licensed; see [LICENSE](LICENSE).
+MPN itself is MIT licensed; see [LICENSE](LICENSE).
 
 ---
 

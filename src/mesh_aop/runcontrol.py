@@ -120,7 +120,7 @@ def checkpoint(label=''):
 
     Cheap when nothing is happening - one os.path.exists against a path in the
     user's own temp folder - so it can sit inside a loop without being felt.
-    Prints marker lines the Workbench recognises, and readable prose for anyone
+    Prints marker lines MPN recognises, and readable prose for anyone
     running from a terminal.
 
     Raises RunAborted if a stop has been requested.
@@ -135,7 +135,7 @@ def checkpoint(label=''):
     print(f'\n[RUN-PAUSED]{where}', flush=True)
     print(f'  Paused at a safe point{where}. Nothing is being computed and no '
           f'file is half-written.', flush=True)
-    print('  Press Resume in the Workbench, or delete the pause flag:', flush=True)
+    print('  Press Resume in MPN, or delete the pause flag:', flush=True)
     print(f'    {_flag(PAUSE_FILE)}', flush=True)
     _announced = True
 

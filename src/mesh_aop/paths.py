@@ -32,7 +32,7 @@ import os
 import sys
 from pathlib import Path
 
-APP_DIR_NAME = 'MeSH Workbench'
+APP_DIR_NAME = 'MPN'
 PORTABLE_MARKER = 'portable.marker'
 
 

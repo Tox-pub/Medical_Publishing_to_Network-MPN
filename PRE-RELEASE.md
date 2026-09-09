@@ -36,7 +36,7 @@ is exactly the shape of the bug that shipped a 345 KB installer as a green
 build. Until there is a `verify_windows_bundle.py`, the manual check is:
 
 ```bash
-python -c "import zipfile,sys; z=zipfile.ZipFile(sys.argv[1]); print([n for n in z.namelist() if 'mesh_config' in n or n.endswith('.env')] or 'clean')" MeSH-Workbench-3.2.10-win64-portable.zip
+python -c "import zipfile,sys; z=zipfile.ZipFile(sys.argv[1]); print([n for n in z.namelist() if 'mesh_config' in n or n.endswith('.env')] or 'clean')" MPN-3.2.10-win64-portable.zip
 ```
 
 This matters more than it looks. Your NCBI e-mail and API key live in that

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-cli.py - command-line orchestrator for the MeSH AOP Network pipeline (`mesh-pipeline`).
+cli.py - command-line orchestrator for the MeSH AOP Network pipeline (`mpn-pipeline`).
 
 Parses command-line arguments and runs the pipeline either end to end or one
 stage at a time, wiring together configuration, MeSH processing, NCBI data
@@ -13,10 +13,10 @@ The orchestrator also enforces per-step prerequisites, manages the optional AOP
 annotation pause, and generates the run-specific annotation templates.
 
 Usage:
-    mesh-pipeline --step all
-    mesh-pipeline --step process --interactive
-    mesh-pipeline --step viz
-    mesh-pipeline --step benchmark
+    mpn-pipeline --step all
+    mpn-pipeline --step process --interactive
+    mpn-pipeline --step viz
+    mpn-pipeline --step benchmark
 """
 
 import os
@@ -78,7 +78,7 @@ def get_version() -> str:
     if pkg_version:
         return pkg_version
     try:
-        return version("mesh_aop_network")
+        return version("mpn")
     except PackageNotFoundError:
         return "Unknown (Package not installed via pip/mamba)"
 
@@ -446,7 +446,7 @@ def _run_file_check(config, repair=False, deep=False):
         print("  merely odd is not a call to make automatically.")
         for a in suspect:
             print(f"      {a.label} - {a.detail}")
-        print("  Tools -> Check and repair files in the Workbench can remove them.")
+        print("  Tools -> Check and repair files in MPN can remove them.")
 
     broken = [a for a in integrity.problems(artifacts) if a.broken]
     if not broken:
@@ -515,7 +515,7 @@ def _preflight(config, step):
     print("\n    Scoring reads this database for every article, so continuing")
     print("    would fail later and waste the intervening hours.")
     print("\n    To fix it:")
-    print("      Workbench:  Tools -> Check and repair files")
+    print("      MPN:  Tools -> Check and repair files")
     print("      Terminal :  python -m mesh_aop.cli --step baseline "
           "--build-database --rebuild-corrupt")
     print(f"\n    Instructions are also saved beside the database itself, as")
@@ -642,7 +642,7 @@ def _generate_run_annotations(json_path: str, master_anno_path: str, run_anno_pa
 def _console_answer(prompt, default=''):
     """input(), or the safe default when there is nobody able to answer.
 
-    The Workbench runs the pipeline as a subprocess with no console attached,
+    MPN runs the pipeline as a subprocess with no console attached,
     so input() gets EOF the instant it is called and the step dies with a
     traceback. That is what happened to anyone who used Pause for annotation:
     the question about syncing back to the master library was printed, and the
@@ -695,7 +695,7 @@ def _sync_run_to_master(run_anno_path: str, master_anno_path: str, is_afk: bool,
     # has curated across every project they have ever run, and doing that
     # because nobody was listening would be the wrong way round.
     if decided in ('yes', 'no'):
-        # The Workbench already asked, in a dialog, and is telling us the answer.
+        # MPN already asked, in a dialog, and is telling us the answer.
         ans = 'y' if decided == 'yes' else 'n'
         print(f"\n  [?] Sync back to the Master Library: {'yes' if ans == 'y' else 'no'} "
               f"(answered in the application).")
@@ -737,7 +737,7 @@ def _sync_run_to_master(run_anno_path: str, master_anno_path: str, is_afk: bool,
 def main():
     """Parse command-line arguments and run the requested pipeline stage(s)."""
     parser = argparse.ArgumentParser(
-        prog="mesh-pipeline",
+        prog="mpn-pipeline",
         description=(
             "Medical Subject Headings (MeSH) Adverse Outcome Pathway (AOP) Network Pipeline\n"
             "Orchestrates knowledge graph generation, semantic filtering, and visualization."
@@ -768,14 +768,14 @@ def main():
 
     # Default None, NOT 'mesh_config.json'. A bare relative name is resolved
     # against the working directory, so the pipeline opened a different file
-    # from the one the Workbench had just written: the window saves to the
+    # from the one MPN had just written: the window saves to the
     # per-user settings path (paths.config_path()), while this opened
     # ./mesh_config.json wherever the process happened to be started. On any
     # installed copy that file does not exist, so every run silently used
     # factory defaults - an empty search term, no credentials, the default data
     # folder - and reported the search term as unset while the user was looking
     # at it in the form. Passing None lets MeshConfig resolve the same path the
-    # Workbench does. An explicit --config still overrides it.
+    # application does. An explicit --config still overrides it.
     parser.add_argument('--config', default=None,
                         help="Path to the configuration JSON file. Defaults to this copy's settings file.")
 
@@ -813,7 +813,7 @@ def main():
     parser.add_argument('--sync-annotations', choices=['ask', 'yes', 'no'], default='ask',
                         help="After a pause for annotation, whether to merge this run's "
                              "strata back into your master annotations library. "
-                             "'ask' prompts on the console; the Workbench asks in a "
+                             "'ask' prompts on the console; MPN asks in a "
                              "dialog and passes the answer here, because a subprocess "
                              "with no console cannot be asked anything.")
     parser.add_argument('--check-files', action='store_true',
@@ -1331,12 +1331,12 @@ def main():
                 print("     from the figures that show the strata. Save as CSV, keeping")
                 print("     the semicolons.")
                 print(f"\n  2. Then run the figures step:")
-                print("       Workbench:  Run -> Step 4 (figures)")
+                print("       MPN:  Run -> Step 4 (figures)")
                 print("       Terminal :  python -m mesh_aop.cli --step viz")
                 if guide:
                     print(f"\n  These instructions are also saved beside the file:")
                     print(f"       {guide}")
-                # A marker the Workbench can recognise. Prefixed and on one line
+                # A marker MPN can recognise. Prefixed and on one line
                 # so it survives the log reader without being mistaken for prose.
                 print(f"\n[PAUSED-FOR-ANNOTATION] {anno}")
                 sys.exit(0)

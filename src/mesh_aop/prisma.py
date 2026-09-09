@@ -187,7 +187,7 @@ def render_text(ledger, flow=None):
     width = 78
     out = ['=' * width,
            'WORKFLOW REPORT',
-           'MeSH Workbench - MeSH co-occurrence network pipeline',
+           'MPN - MeSH co-occurrence network pipeline',
            '=' * width, '']
 
     term = ledger.get('run', 'search_term', '') or '(not recorded)'
@@ -208,7 +208,7 @@ def render_text(ledger, flow=None):
         out.append(f"Random seed      : {seed}")
     ver = ledger.get('run', 'workbench_version', '')
     if ver:
-        out.append(f"Workbench version: {ver}")
+        out.append(f"MPN version: {ver}")
     out.append(f"Report generated : {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
     # Stages written on different days are legible only if the dates are shown.
@@ -333,7 +333,7 @@ def render_figure(ledger, output_dir, file_prefix, flow=None):
 
     stamp = ledger.get('run', 'workbench_version', '')
     ax.text(9.95, 0.12,
-            f"MeSH Workbench{' v' + stamp if stamp else ''}  -  "
+            f"MPN{' v' + stamp if stamp else ''}  -  "
             f"{datetime.now().strftime('%Y-%m-%d')}",
             ha='right', va='bottom', fontsize=7.5, color='#888888')
 

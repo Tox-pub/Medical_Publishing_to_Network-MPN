@@ -17,7 +17,7 @@ sys.path.insert(0, 'src')
 
 import tkinter as tk                                               # noqa: E402
 from mesh_aop import citation                                       # noqa: E402
-from mesh_workbench.app import Workbench                            # noqa: E402
+from mpn.app import Workbench                            # noqa: E402
 
 FAILS = []
 
@@ -103,7 +103,7 @@ for i in range(help_menu.index('end') + 1):
     labels.append('---' if help_menu.type(i) == 'separator'
                   else help_menu.entrycget(i, 'label'))
 
-for want in ('MeSH Workbench Manual', 'Installing and Updating',
+for want in ('MPN Manual', 'Installing and Updating',
              'License', 'Cite this Program', 'About'):
     ck(want in labels, f'{want!r} is on the menu', f'menu is {labels}')
 for gone in ('.md', 'README', 'Reference figures'):
@@ -120,7 +120,7 @@ import webbrowser                                                   # noqa: E402
 _real_open = webbrowser.open
 webbrowser.open = lambda *a, **k: False
 
-for name, fn in (('MeSH Workbench Manual', app.open_manual),
+for name, fn in (('MPN Manual', app.open_manual),
                  ('License', app.open_license),
                  ('Cite this Program', app.open_citation),
                  ('About', app.open_about)):
@@ -143,7 +143,7 @@ for name, fn in (('MeSH Workbench Manual', app.open_manual),
 print('\n=== 5b. when a browser IS available, the documents go to it ===')
 asked = []
 webbrowser.open = lambda url, *a, **k: (asked.append(url), True)[1]
-for name, fn in (('MeSH Workbench Manual', app.open_manual),
+for name, fn in (('MPN Manual', app.open_manual),
                  ('Installing and Updating',
                   lambda: app.open_doc('INSTALL.md', 'Installing and Updating'))):
     app._readers.pop(name, None)
@@ -165,7 +165,7 @@ from pathlib import Path                                            # noqa: E402
 from mesh_aop import paths as _paths                                # noqa: E402
 
 folder = Path(_paths.user_root()) / 'manual'
-app._readers.pop('MeSH Workbench Manual', None)
+app._readers.pop('MPN Manual', None)
 app.open_manual()
 app.update_idletasks()
 for stem in ('HELP', 'INSTALL', 'COMMAND-LINE', 'README'):

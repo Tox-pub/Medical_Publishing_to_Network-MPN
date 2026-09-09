@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Launch the Workbench.
+Launch MPN.
 
 Resolves the two things the window needs and cannot infer reliably: the project
 directory holding mesh_config.json, and the interpreter that should run pipeline
@@ -25,7 +25,7 @@ def _project_dir():
     if os.path.exists(os.path.join(os.getcwd(), 'mesh_config.json')):
         return os.getcwd()
     here = os.path.dirname(os.path.abspath(__file__))
-    root = os.path.dirname(os.path.dirname(here))          # src/mesh_workbench -> repo
+    root = os.path.dirname(os.path.dirname(here))          # src/mpn -> repo
     return root if os.path.exists(os.path.join(root, 'mesh_config.json')) else os.getcwd()
 
 

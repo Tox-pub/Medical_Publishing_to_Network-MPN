@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-app.py - the MeSH Workbench window.
+app.py - the MPN window.
 
 Four screens in one fixed-size window: Data setup, Settings, Running, Results.
 The settings form is generated from schema.TABS, so the UI never hard-codes a
@@ -105,7 +105,7 @@ class Workbench(tk.Tk):
         self._watch_sig = None
         self._watch_job = None
 
-        self.title('MeSH Workbench')
+        self.title('MPN')
         self.configure(bg=FACE)
         self.geometry(f'{W}x{H}')
         self.minsize(W, H)
@@ -424,7 +424,7 @@ class Workbench(tk.Tk):
         # Named for what they are, not for their filenames, and every one opens
         # in a reader window this program owns - read-only, and never modal, so
         # the manual can sit open beside the form while values are typed in.
-        h.add_command(label='MeSH Workbench Manual', command=self.open_manual)
+        h.add_command(label='MPN Manual', command=self.open_manual)
         h.add_command(label='How to annotate strata',
                       command=self.open_annotation_guide)
         h.add_command(label='Installing and Updating',
@@ -534,7 +534,7 @@ class Workbench(tk.Tk):
             return ''
 
     def open_manual(self):
-        self.open_doc('HELP.md', 'MeSH Workbench Manual')
+        self.open_doc('HELP.md', 'MPN Manual')
 
     def open_license(self):
         """The licence, read from LICENSE rather than restated here.
@@ -569,7 +569,8 @@ class Workbench(tk.Tk):
 
     def open_about(self):
         self.show_reader('About', (
-            f'# MeSH Workbench {__version__}\n\n'
+            f'# MPN {__version__}\n\n'
+            'Medical Publishing to Network.\n\n'
             'MeSH co-occurrence concept networks for Adverse Outcome '
             'Pathways, built from the PubMed literature.\n\n'
             'Copyright (c) 2026 Tox-pub. Released under the MIT License - '
@@ -628,7 +629,7 @@ class Workbench(tk.Tk):
     # What the Help menu calls each document, so a page reached by following a
     # link is titled the same as one opened from the menu.
     _DOC_TITLES = {
-        'HELP.md': 'MeSH Workbench Manual',
+        'HELP.md': 'MPN Manual',
         'INSTALL.md': 'Installing and Updating',
         'COMMAND-LINE.md': 'Command-Line Guide',
         'README.md': 'About This Program',
@@ -652,7 +653,7 @@ class Workbench(tk.Tk):
                     continue
                 body = Path(path).read_text(encoding='utf-8', errors='replace')
                 page = mdhtml.render_page(
-                    body, f'{other_title} - MeSH Workbench', path)
+                    body, f'{other_title} - MPN', path)
                 (folder / f'{Path(other).stem}.html').write_text(
                     page, encoding='utf-8')
             except (OSError, UnicodeError):
@@ -667,7 +668,7 @@ class Workbench(tk.Tk):
         """
         try:
             from mesh_aop import mdhtml
-            page = mdhtml.render_page(text, f'{title} - MeSH Workbench', source)
+            page = mdhtml.render_page(text, f'{title} - MPN', source)
         except Exception:                                          # noqa: BLE001
             return False
 
@@ -714,7 +715,7 @@ class Workbench(tk.Tk):
             return existing
 
         win = tk.Toplevel(self)
-        win.title(f'{title} - MeSH Workbench')
+        win.title(f'{title} - MPN')
         win.configure(bg=FACE)
         w = min(self.px(760), max(560, self.winfo_screenwidth() - 120))
         h = min(self.px(640), max(420, self.winfo_screenheight() - 160))
@@ -829,7 +830,7 @@ class Workbench(tk.Tk):
         win = tk.Toplevel(self)
         # Only leaves via a button, and the close box is answered rather than
         # swallowed - a dialog that ignores it looks like a hung window.
-        self._make_modal(win, 'MeSH Workbench - first run')
+        self._make_modal(win, 'MPN - first run')
 
         tk.Label(win, text='Where should your files go?', bg=FACE, font=self.f_bold,
                  anchor='w').pack(fill='x', padx=12, pady=(12, 2))
@@ -998,11 +999,11 @@ class Workbench(tk.Tk):
         assets = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets')
         try:
             if os.name == 'nt':
-                ico = os.path.join(assets, 'mesh_workbench.ico')
+                ico = os.path.join(assets, 'mpn.ico')
                 if os.path.exists(ico):
                     self.iconbitmap(default=ico)
                     return
-            png = os.path.join(assets, 'mesh_workbench.png')
+            png = os.path.join(assets, 'mpn.png')
             if os.path.exists(png):
                 self._icon_img = tk.PhotoImage(file=png)
                 self.iconphoto(True, self._icon_img)
@@ -1568,7 +1569,7 @@ class Workbench(tk.Tk):
             t0 = _t.perf_counter()
             try:
                 req = urllib.request.Request(
-                    url, headers={'User-Agent': 'MeSH-Workbench/3.2.10'})
+                    url, headers={'User-Agent': 'MPN/3.2.10'})
                 with urllib.request.urlopen(req, timeout=8) as r:
                     r.read(64)
                 ms = (_t.perf_counter() - t0) * 1000
@@ -3308,7 +3309,7 @@ class Workbench(tk.Tk):
 
     # -------------------------------------------------------- screen: uninstall
     def _build_uninstall(self, root):
-        tk.Label(root, text='Uninstall MeSH Workbench', bg=FACE, font=self.f_bold,
+        tk.Label(root, text='Uninstall MPN', bg=FACE, font=self.f_bold,
                  anchor='w').pack(fill='x', padx=10, pady=(10, 2))
         tk.Label(root, bg=FACE, anchor='w', justify='left',
                  text='Everything this program downloaded, built or installed is '

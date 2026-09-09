@@ -9,7 +9,7 @@ somewhere else stays behind too, and a pip install leaves a package and its
 console scripts in the environment.
 
 This module only reports and removes; it decides nothing. Both front-ends - the
-`mesh-uninstall` command and the Workbench's uninstall screen - drive it, so
+`mpn-uninstall` command and MPN's uninstall screen - drive it, so
 they cannot disagree about what "clean" means.
 
 Nothing outside the inventory is ever touched, and results are opt-in: work that
@@ -359,7 +359,7 @@ def shortcut_locations():
 
 
 def find_shortcuts(project_dir=None):
-    """Shortcuts on this machine that point INTO a MeSH Workbench install.
+    """Shortcuts on this machine that point INTO a MPN install.
 
     Both installers make these, and so does the portable
     'Create desktop shortcut.bat'. Nothing removed them: an interrupted MSI
@@ -382,7 +382,13 @@ def find_shortcuts(project_dir=None):
             target = _shortcut_target(lnk).lower()
             if not target:
                 continue
-            ours = ('mesh workbench' in target
+            # Matched on the product name as it appears in the shortcut's
+            # target path. Kept narrow deliberately: a bare 'mpn' would match
+            # any path that happens to contain those three letters, so it is
+            # anchored to a path separator or the launcher's own filename.
+            ours = ('\\mpn\\' in target or '/mpn/' in target
+                    or target.endswith('mpn.bat')
+                    or target.endswith('mpn.exe')
                     or (root and target.startswith(root)))
             if ours:
                 found.append(lnk)
@@ -522,7 +528,7 @@ def schedule_delete_after_exit(folder):
     script = Path(tempfile.gettempdir()) / f'mesh_uninstall_{os.getpid()}.bat'
     body = (
         '@echo off\r\n'
-        'rem Written by the MeSH Workbench uninstaller. Waits for the program\r\n'
+        'rem Written by the MPN uninstaller. Waits for the program\r\n'
         'rem to close, removes its folder, then removes itself.\r\n'
         f':wait\r\n'
         f'tasklist /FI "PID eq {os.getpid()}" 2>nul | find "{os.getpid()}" >nul\r\n'
@@ -600,7 +606,7 @@ def package_is_installed():
         from importlib.metadata import PackageNotFoundError, distribution
     except ImportError:
         return False
-    for name in ('mesh-aop-network', 'mesh_aop_network'):
+    for name in ('mesh-aop-network', 'mpn'):
         try:
             distribution(name)
             return True
@@ -622,8 +628,8 @@ def bundle_root():
     exe = Path(sys.executable).resolve()
     for parent in list(exe.parents)[:4]:
         if (parent / 'python').is_dir() and any(
-                (parent / n).exists() for n in ('MeSH Workbench', 'mesh-pipeline',
-                                                'MeSH Workbench.bat', 'app')):
+                (parent / n).exists() for n in ('MPN', 'mpn-pipeline',
+                                                'MPN.bat', 'app')):
             return parent
     return None
 
@@ -639,7 +645,7 @@ def pip_hint():
     exe = str(Path(sys.executable))
     if ' ' in exe:
         exe = f'"{exe}"'
-    return f'{exe} -m pip uninstall mesh_aop_network'
+    return f'{exe} -m pip uninstall mpn'
 
 
 def removal_instructions():
@@ -656,7 +662,7 @@ def removal_instructions():
                 'Everything it needs is inside one folder. To finish, delete it:',
                 f'    {root}',
                 'If it was installed with an installer instead, use',
-                'Settings > Apps > MeSH Workbench > Uninstall.'])
+                'Settings > Apps > MPN > Uninstall.'])
         return ('This copy is self-contained - it installed nothing.', [
             'Everything it needs is inside one folder, including its own',
             'Python. To finish, delete that folder:',
@@ -665,7 +671,7 @@ def removal_instructions():
             'installed into an interpreter, only added to its path.'])
     if sys.platform == 'win32':
         return ('Remove the program itself from Windows.', [
-            'Settings > Apps > Installed apps > MeSH Workbench > Uninstall.',
+            'Settings > Apps > Installed apps > MPN > Uninstall.',
             'If you are running a pip install instead, use:',
             f'    {pip_hint()}'])
     if package_is_installed():

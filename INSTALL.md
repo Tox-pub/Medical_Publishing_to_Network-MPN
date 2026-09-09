@@ -1,4 +1,4 @@
-# Installing MeSH Workbench
+# Installing MPN (Medical Publishing to Network)
 
 **One file per system.** Download the one with your system's name on it from
 [Releases](https://github.com/Tox-pub/Mesh-Network-Analysis/releases), and
@@ -6,9 +6,9 @@ ignore the other two.
 
 | System | File | What to do |
 | :--- | :--- | :--- |
-| **Windows** | `MeSH-Workbench-3.2.10-windows.msi` | Double-click it. |
-| **Linux** | `MeSH-Workbench-3.2.10-linux-x86_64.tar.gz` | Extract, then `./"MeSH Workbench"` — it adds itself to your applications menu |
-| **macOS** | `MeSH-Workbench-3.2.10-macos-arm64.tar.gz` | Extract, then `./"MeSH Workbench"` |
+| **Windows** | `MPN-3.2.10-windows.msi` | Double-click it. |
+| **Linux** | `MPN-3.2.10-linux-x86_64.tar.gz` | Extract, then `./"MPN"` — it adds itself to your applications menu |
+| **macOS** | `MPN-3.2.10-macos-arm64.tar.gz` | Extract, then `./"MPN"` |
 
 **Every one carries its own Python.** There is nothing to install first - no
 system Python, no `python3-tk`, no administrator rights, and nothing written
@@ -26,7 +26,7 @@ outside your own profile.
 
 ## Windows
 
-Double-click `MeSH-Workbench-3.2.10-windows.msi`. It asks where to install,
+Double-click `MPN-3.2.10-windows.msi`. It asks where to install,
 offers a desktop and Start-menu shortcut, and appears in Add/Remove Programs
 afterwards.
 
@@ -39,19 +39,19 @@ with `0x80070005` and nothing to click. An MSI introduces no new binary.
 Silent install, for deploying to several machines:
 
 ```
-msiexec /i "MeSH-Workbench-3.2.10-windows.msi" /qn
+msiexec /i "MPN-3.2.10-windows.msi" /qn
 ```
 
 ---
 
 ## Linux
 
-Download `MeSH-Workbench-3.2.10-linux-x86_64.tar.gz`, then:
+Download `MPN-3.2.10-linux-x86_64.tar.gz`, then:
 
 ```
-tar -xzf MeSH-Workbench-3.2.10-linux-x86_64.tar.gz
-cd MeSH-Workbench-3.2.10-linux-x86_64
-./"MeSH Workbench"
+tar -xzf MPN-3.2.10-linux-x86_64.tar.gz
+cd MPN-3.2.10-linux-x86_64
+./"MPN"
 ```
 
 That is all. The folder carries its own Python, its own Tk, and every library
@@ -62,15 +62,15 @@ a minute, and needs no network.
 **It appears in your applications menu after that first launch.** A `.desktop`
 entry has to name an absolute path, and that is not known until you unpack the
 folder somewhere, so it cannot be shipped ready-made - the launcher writes it
-the first time it runs, to `~/.local/share/applications/mesh-workbench.desktop`.
+the first time it runs, to `~/.local/share/applications/mpn.desktop`.
 No root, nothing outside your own home directory, and it is rewritten if you
-later move the folder. `./mesh-uninstall` removes it again. If your desktop does
+later move the folder. `./mpn-uninstall` removes it again. If your desktop does
 not pick it up immediately, log out and back in.
 
 Without a desktop:
 
 ```
-./mesh-pipeline --step all
+./mpn-pipeline --step all
 ```
 
 ---
@@ -79,11 +79,11 @@ Without a desktop:
 
 **Yes, this runs on a Mac without paying Apple anything.**
 
-Download `MeSH-Workbench-3.2.10-macos-arm64.tar.gz` (Apple silicon), extract it,
+Download `MPN-3.2.10-macos-arm64.tar.gz` (Apple silicon), extract it,
 then **open Terminal**, change to the extracted folder and run:
 
 ```
-./"MeSH Workbench"
+./"MPN"
 ```
 
 ### Why Terminal, and not a double-click
@@ -106,7 +106,7 @@ either open the script in a text editor or refuse it. Afterwards, either works.
 If you would rather not have a script change attributes on your behalf:
 
 ```
-xattr -dr com.apple.quarantine "/path/to/MeSH-Workbench-3.2.10-macos-arm64"
+xattr -dr com.apple.quarantine "/path/to/MPN-3.2.10-macos-arm64"
 ```
 
 That removes one extended attribute from the files in that folder and touches
@@ -156,9 +156,9 @@ other program does.
 
 | | Installed | Portable |
 | --- | --- | --- |
-| Program | `%LOCALAPPDATA%\Programs\MeSH Workbench` | the folder you extracted |
-| Settings | `%LOCALAPPDATA%\MeSH Workbench` | the same folder |
-| Results | `Documents\MeSH Workbench` | the same folder |
+| Program | `%LOCALAPPDATA%\Programs\MPN` | the folder you extracted |
+| Settings | `%LOCALAPPDATA%\MPN` | the same folder |
+| Results | `Documents\MPN` | the same folder |
 | Downloaded data | your choice, set on the Folders tab | the same folder |
 
 A portable copy is self-contained because it carries a file named
@@ -180,14 +180,14 @@ delete the old folder.
 
 ## Removing it
 
-**Installed:** Settings → Apps → MeSH Workbench → Uninstall.
+**Installed:** Settings → Apps → MPN → Uninstall.
 
 By default this keeps the PubMed data you downloaded, since it is large and
 slow to fetch again, and always clears the temporary working copy the database
 build leaves in your Windows temp folder. To remove the downloaded data too:
 
 ```
-msiexec /x "MeSH-Workbench-3.2.10-win64.msi" REMOVEDATA=1
+msiexec /x "MPN-3.2.10-win64.msi" REMOVEDATA=1
 ```
 
 **Windows portable zip:** run `Uninstall.bat`, then delete the folder.
@@ -196,33 +196,33 @@ msiexec /x "MeSH-Workbench-3.2.10-win64.msi" REMOVEDATA=1
 just deleting a folder:
 
 ```
-cd MeSH-Workbench-3.2.10-linux-x86_64
+cd MPN-3.2.10-linux-x86_64
 ```
 
 ```
-./mesh-uninstall
+./mpn-uninstall
 ```
 
 That removes what the program put **outside** its own folder: settings and
-downloaded data under `~/.local/share/MeSH Workbench` (`~/Library/Application
+downloaded data under `~/.local/share/MPN` (`~/Library/Application
 Support` on macOS), the applications-menu entry, and — if you ask it to — your
 results. It lists everything with sizes and asks before removing anything.
 
 Then delete the folder itself, which is the program:
 
 ```
-rm -rf MeSH-Workbench-3.2.10-linux-x86_64
+rm -rf MPN-3.2.10-linux-x86_64
 ```
 
 **There is nothing to `pip uninstall`.** The bundle carries its own Python and
 puts the application on that interpreter's path; it never installs it. Earlier
 versions ended the uninstall by suggesting `python3.12 -m pip uninstall
-mesh_aop_network`, which failed with *no such file or directory* because
+mpn`, which failed with *no such file or directory* because
 `python3.12` exists only inside the bundle — ignore that instruction if you meet
 it, and delete the folder instead.
 
-**Installed from source with pip:** `python -m pip uninstall mesh_aop_network`,
-after running `mesh-uninstall` to clear the data. Use the same interpreter you
+**Installed from source with pip:** `python -m pip uninstall mpn`,
+after running `mpn-uninstall` to clear the data. Use the same interpreter you
 installed it into.
 
 Your results are never removed unless you explicitly ask.
@@ -230,7 +230,7 @@ Your results are never removed unless you explicitly ask.
 To see exactly what is on disk before deciding, without changing anything:
 
 ```
-mesh-uninstall --list
+mpn-uninstall --list
 ```
 
 That lists every file the program downloaded, built or installed, with sizes —

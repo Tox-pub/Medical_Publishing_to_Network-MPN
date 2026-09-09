@@ -13,8 +13,8 @@ describes them without citing them is incomplete.
 
 from importlib.metadata import PackageNotFoundError, version as _pkg_version
 
-TITLE = ('MeSH Workbench: MeSH co-occurrence concept networks for '
-         'Adverse Outcome Pathways')
+TITLE = ('MPN (Medical Publishing to Network): MeSH co-occurrence '
+         'concept networks for Adverse Outcome Pathways')
 AUTHOR_FAMILY = 'Sax'
 AUTHOR_GIVEN = 'Jakob'
 AFFILIATION = 'Karolinska Institutet'
@@ -30,7 +30,7 @@ def package_version(default='3.2.10'):
     went straight into a citation reading "Version None". Anything falsy is
     treated as not found.
     """
-    for name in ('mesh_aop_network', 'mesh-aop-network'):
+    for name in ('mpn',):
         try:
             found = _pkg_version(name)
         except (PackageNotFoundError, Exception):       # noqa: B014
@@ -88,7 +88,7 @@ def citation_text(version=None):
 
 def bibtex(version=None):
     v = version or package_version()
-    return (f'@software{{sax{YEAR}meshworkbench,\n'
+    return (f'@software{{sax{YEAR}mpn,\n'
             f'  author       = {{{AUTHOR_FAMILY}, {AUTHOR_GIVEN}}},\n'
             f'  title        = {{{TITLE}}},\n'
             f'  year         = {{{YEAR}}},\n'

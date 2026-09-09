@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-check_env.py - environment and dependency verification (the `mesh-check-env` command).
+check_env.py - environment and dependency verification (the `mpn-check-env` command).
 
 Validates that the active interpreter and installed packages can run the
 pipeline before a long job is started.
@@ -285,7 +285,7 @@ def provision_kaleido_dependencies():
         print("        Ensure 'plotly >= 6.1.1' is installed via pyproject.toml first.")
 
 def main():
-    """Entry point for `mesh-check-env`: verify the environment, then provision rendering libraries."""
+    """Entry point for `mpn-check-env`: verify the environment, then provision rendering libraries."""
     auto_mode = "--auto" in sys.argv
     try:
         success = check_environment(auto_install=auto_mode)

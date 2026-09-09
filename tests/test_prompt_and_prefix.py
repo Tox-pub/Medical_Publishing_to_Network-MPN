@@ -6,7 +6,7 @@
    any run had ever left in that folder.
 
 2. Pause for annotation killed the run. The pipeline asked whether to sync AOP
-   levels back to the master library with input(), and the Workbench runs it as
+   levels back to the master library with input(), and MPN runs it as
    a subprocess with no console, so input() got EOF and the step died - with the
    question printed just above the traceback, which read as though answering it
    was what crashed.
@@ -150,7 +150,7 @@ for typed, want in (
     ck(got == want, f'edges {typed!r:40} -> {got!r}', f'expected {want!r}')
 
 # the help must not show an example that breaks when typed verbatim
-from mesh_workbench.settings_schema import SETTINGS                # noqa: E402
+from mpn.settings_schema import SETTINGS                # noqa: E402
 tn = [f for _t, f in SETTINGS if f.key.endswith('target_nodes')][0]
 ck('Skin; Haptens' in (tn.note or ''), 'the field shows the example')
 # It used to tell people NOT to use quotes, which was backwards once quotes
@@ -161,7 +161,7 @@ ck('Quotes are accepted' in (tn.note or ''),
 print('\n=== 4. the sync answer comes from the application, not a dead prompt ===')
 import csv                                                         # noqa: E402
 import subprocess                                                  # noqa: E402
-from mesh_workbench.app import Workbench                           # noqa: E402
+from mpn.app import Workbench                           # noqa: E402
 
 # the flag exists and only accepts the three answers
 help_out = subprocess.run(

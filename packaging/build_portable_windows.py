@@ -10,11 +10,11 @@ SmartScreen react to, and what blocked the frozen build.
 
 Layout produced:
 
-    MeshWorkbench/
+    MPN/
       python/                embeddable CPython (PSF-signed python.exe)
       python/Lib/site-packages/   the pipeline's dependencies
-      app/                   the Workbench and mesh_aop
-      MeSH Workbench.bat     the launcher a user double-clicks
+      app/                   MPN and mesh_aop
+      MPN.bat     the launcher a user double-clicks
       Uninstall.bat          removal, including the temp files outside this tree
       portable.marker        keeps settings and results in this folder
       README - Install and First Run.txt
@@ -38,8 +38,8 @@ sys.path.insert(0, HERE)
 # so they cannot disagree about it. See build_location.py.
 import build_location                                              # noqa: E402
 
-NAME = 'MeshWorkbench'          # zip/folder stem, no spaces
-DISPLAY = 'MeSH Workbench'      # what the user sees and clicks
+NAME = 'MPN'          # zip/folder stem, no spaces
+DISPLAY = 'MPN'      # what the user sees and clicks
 VERSION = '3.2.10'   # tracks the project version in pyproject.toml
 PY_VER = '3.12.7'
 EMBED_URL = f'https://www.python.org/ftp/python/{PY_VER}/python-{PY_VER}-embed-amd64.zip'
@@ -205,8 +205,8 @@ def copy_app(repo, dst):
     skip = shutil.ignore_patterns('__pycache__', '*.pyc', '.ipynb_checkpoints',
                                   '*.ipynb', 'shots', 'dist', 'build', '_staged',
                                   '_spec', '_cache')
-    shutil.copytree(os.path.join(repo, 'src', 'mesh_workbench'),
-                    os.path.join(dst, 'mesh_workbench'), dirs_exist_ok=True, ignore=skip)
+    shutil.copytree(os.path.join(repo, 'src', 'mpn'),
+                    os.path.join(dst, 'mpn'), dirs_exist_ok=True, ignore=skip)
     shutil.copytree(os.path.join(repo, 'src', 'mesh_aop'),
                     os.path.join(dst, 'mesh_aop'), dirs_exist_ok=True, ignore=skip)
     # The AOP stratum dictionary travels with the reference corpus. Without it
@@ -258,7 +258,7 @@ PY = os.path.join(os.path.dirname(APP), 'python', 'python.exe')
 
 if __name__ == '__main__':
     repo = os.environ.get('MESH_REPO') or os.path.dirname(APP)
-    from mesh_workbench.app import main
+    from mpn.app import main
     main(repo, PY if os.path.exists(PY) else sys.executable)
 '''
 
@@ -273,7 +273,7 @@ Delete it and this copy behaves as an installed one: settings and results move
 to your own profile, and each user of the machine gets their own.
 """
 
-README = r"""MeSH Workbench {ver}
+README = r"""MPN {ver}
 ===============================================================
 
 WHAT THIS IS
@@ -284,7 +284,7 @@ INSTALLING
     There is no installer. Extract this folder anywhere you can write to -
     Documents, the Desktop, or a USB drive - then open it and double-click
 
-        MeSH Workbench.bat
+        MPN.bat
 
     Nothing is installed and no administrator rights are needed.
 
@@ -310,7 +310,7 @@ UNINSTALLING
     knows about it.
 
 IF THE WINDOW DOES NOT APPEAR
-    Run "MeSH Workbench (Troubleshooting).bat" instead. It does the same thing
+    Run "MPN (Troubleshooting).bat" instead. It does the same thing
     but keeps a terminal open, so any error message stays on screen.
 
 BEFORE YOU CAN ANALYSE ANYTHING
@@ -333,10 +333,10 @@ REQUIREMENTS
     About 500 MB for this folder, plus room for the data described above.
 
 WHAT IS IN HERE
-    MeSH Workbench.bat      the launcher - this is the one to click
+    MPN.bat      the launcher - this is the one to click
     Install.bat             installs it properly, if you would rather
     Create desktop shortcut.bat   puts an icon on your Desktop
-    mesh-pipeline.bat       the same pipeline without the window, for a shell
+    mpn-pipeline.bat       the same pipeline without the window, for a shell
     Uninstall.bat           removes the program and its data
     python\                 Python {py}, the official build from python.org
     app\                    the application and the analysis pipeline

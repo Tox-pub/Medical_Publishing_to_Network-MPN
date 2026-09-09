@@ -1,4 +1,4 @@
-name: mesh_aop_network
+name: mpn
 channels:
   - conda-forge
   - nodefaults

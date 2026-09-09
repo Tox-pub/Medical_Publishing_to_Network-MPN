@@ -10,7 +10,7 @@ import sys
 import tempfile
 
 sys.path.insert(0, 'src')
-os.environ.setdefault('MESH_WORKBENCH_TEST', '1')
+os.environ.setdefault('MPN_TEST', '1')
 
 import tkinter as tk                                               # noqa: E402
 
@@ -31,7 +31,7 @@ def walk(w, out=None):
     return out
 
 
-from mesh_workbench.app import Workbench                            # noqa: E402
+from mpn.app import Workbench                            # noqa: E402
 
 box = tempfile.mkdtemp()
 cfgp = os.path.join(box, 'mesh_config.json')
@@ -69,7 +69,7 @@ ck(h < cap, f'pane height {h}px is below the {cap}px ceiling', f'h={h} cap={cap}
 ck(h < 220, f'and is modest in absolute terms ({h}px)', f'h={h}')
 
 # which field drives it now
-from mesh_workbench import settings_schema as schema                # noqa: E402
+from mpn import settings_schema as schema                # noqa: E402
 longest = max(((len(f.note or ''), f.key) for _t, fs in schema.TABS for f in fs))
 ck('use_reference_data' not in longest[1],
    f'the reference checkbox no longer drives the height (longest is {longest[1]})',

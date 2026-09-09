@@ -1,4 +1,8 @@
-# MeSH Workbench
+# MPN — Medical Publishing to Network
+
+**MPN** stands for *Medical Publishing to Network*: it turns published medical
+literature into a network. Both forms are used throughout — the full name where
+the software is introduced, `MPN` everywhere after.
 
 Builds and validates **MeSH co-occurrence concept networks** from the PubMed
 literature — connecting chemical stressors to adverse outcomes through
@@ -15,14 +19,14 @@ A desktop application for Windows, and a command-line pipeline for any platform.
 
 | System | Download | What to do |
 | :--- | :--- | :--- |
-| Windows | `MeSH-Workbench-<version>-windows.msi` | Double-click it. |
-| Linux | `MeSH-Workbench-<version>-linux-x86_64.tar.gz` | Extract, then `./"MeSH Workbench"` |
-| macOS | `MeSH-Workbench-<version>-macos-arm64.tar.gz` | Extract, then `./"MeSH Workbench"` |
+| Windows | `MPN-<version>-windows.msi` | Double-click it. |
+| Linux | `MPN-<version>-linux-x86_64.tar.gz` | Extract, then `./"MPN"` |
+| macOS | `MPN-<version>-macos-arm64.tar.gz` | Extract, then `./"MPN"` |
 
 **Each one carries its own Python.** Nothing needs installing first - no system
 Python, no `python3-tk`, no administrator rights, nothing written outside your
 own profile. To remove it, use the uninstaller — Tools → Uninstall in the
-window, `Uninstall.bat` on Windows, `./mesh-uninstall` on Linux and macOS.
+window, `Uninstall.bat` on Windows, `./mpn-uninstall` on Linux and macOS.
 Deleting the folder leaves the databases and settings behind, which is
 deliberate: they are written outside it so that upgrading does not cost you a
 52 GB download.
@@ -68,9 +72,9 @@ Once the database exists, everyday analysis runs offline.
 Each stage can be run on its own, from the application or the command line:
 
 ```
-mesh-pipeline --step network
-mesh-workbench
-mesh-uninstall --list
+mpn-pipeline --step network
+mpn
+mpn-uninstall --list
 ```
 
 A curated reference corpus ships with the program — the OECD AOP-40 allergic

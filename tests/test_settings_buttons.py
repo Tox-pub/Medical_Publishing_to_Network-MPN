@@ -15,8 +15,8 @@ import sys
 sys.path.insert(0, 'src')
 
 import tkinter as tk                                               # noqa: E402
-from mesh_workbench import settings_schema as schema                # noqa: E402
-from mesh_workbench.app import Workbench                            # noqa: E402
+from mpn import settings_schema as schema                # noqa: E402
+from mpn.app import Workbench                            # noqa: E402
 
 FAILS = []
 

@@ -130,7 +130,7 @@ Save the file, then run the figures step:
 
 | Where | What to do |
 | :--- | :--- |
-| In the Workbench | Run → Step 4 — Figures |
+| In MPN | Run → Step 4 — Figures |
 | In a terminal | `python -m mesh_aop.cli --step viz` |
 
 Nothing before that step is recomputed, so this is quick. Edit the file and
@@ -156,7 +156,7 @@ def master_db_guide_text(db_path, data_dir='', workspace_dir=''):
     return f"""\
 ================================================================================
 THE MASTER ANNOTATION DATABASE
-MeSH Workbench - what this file is, and how to rebuild it
+MPN - what this file is, and how to rebuild it
 ================================================================================
 
     {db_path}
@@ -175,7 +175,7 @@ WHY YOU SHOULD NOT DELETE IT CASUALLY
     the database exists. The Data Setup screen has a button for exactly that.
 
 HOW TO REBUILD IT
-    In the Workbench:
+    In MPN:
         Database -> Data setup, then press Build next to "Master annotation
         database". If a damaged database is already there, tick the option to
         delete it first.
@@ -193,7 +193,7 @@ IF IT WILL NOT OPEN
     will tell you plainly if it is damaged rather than failing halfway through
     a long step.
 
-    Run Tools -> Check and repair files in the Workbench. It reports what is
+    Run Tools -> Check and repair files in MPN. It reports what is
     damaged, offers to remove it, and tells you which step to resume from. Only
     the master database has to be rebuilt from scratch; everything else is
     derived and can be regenerated in minutes.
@@ -212,7 +212,7 @@ WHAT ELSE LIVES HERE
     analysis - only the time it would take to download it all again.
 
 ================================================================================
-Written automatically by MeSH Workbench. Safe to delete; it will come back.
+Written automatically by MPN. Safe to delete; it will come back.
 ================================================================================
 """
 
@@ -244,7 +244,7 @@ def write_annotation_guide(annotation_path, config=None, strata_order=''):
                                      strata_order=strata_order)
     try:
         from . import mdhtml
-        page = mdhtml.render_page(body, 'How to annotate - MeSH Workbench')
+        page = mdhtml.render_page(body, 'How to annotate - MPN')
     except Exception:                                              # noqa: BLE001
         return _write(os.path.join(folder, ANNOTATION_GUIDE_NAME_FALLBACK), body)
     return _write(os.path.join(folder, ANNOTATION_GUIDE_NAME), page)

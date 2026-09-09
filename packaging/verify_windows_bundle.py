@@ -14,9 +14,9 @@ not, and every fault it would have caught has now happened at least once:
 
 Works on the portable .zip, the assembled folder, or the .msi.
 
-    python packaging/verify_windows_bundle.py <build>\\MeshWorkbench-3.2.10-win64-portable.zip
-    python packaging/verify_windows_bundle.py <build>\\MeshWorkbench
-    python packaging/verify_windows_bundle.py <build>\\MeSH-Workbench-3.2.10-win64.msi
+    python packaging/verify_windows_bundle.py <build>\\MPN-3.2.10-win64-portable.zip
+    python packaging/verify_windows_bundle.py <build>\\MPN
+    python packaging/verify_windows_bundle.py <build>\\MPN-3.2.10-win64.msi
 """
 
 import argparse
@@ -38,7 +38,7 @@ FORBIDDEN_DIRS = ('data/', 'results/', '__pycache__/')
 REQUIRED = (
     'python/python.exe',
     'app/mesh_aop/cli.py',
-    'app/mesh_workbench/app.py',
+    'app/mpn/app.py',
     # Renders the manual for the browser. Listed because losing it is silent:
     # the Help menu would fall back to the in-window reader and say nothing.
     'app/mesh_aop/mdhtml.py',
@@ -49,11 +49,11 @@ REQUIRED = (
     # ships a manual with a dead link. The portable build did, until now.
     'COMMAND-LINE.md',
     'README.md',
-    'MeSH Workbench.bat',
-    # The command line's entry point, matching mesh-pipeline in the Unix
+    'MPN.bat',
+    # The command line's entry point, matching mpn-pipeline in the Unix
     # bundles. Without it the pipeline is still present and still runnable,
     # but only by naming the interpreter and the module by hand.
-    'mesh-pipeline.bat',
+    'mpn-pipeline.bat',
     'Uninstall.bat',
 )
 
@@ -145,7 +145,7 @@ def verify(target):
     print('\n-- the launcher')
     bats = [n for n in names if n.lower().endswith('.bat')]
     check(bats, f'{len(bats)} .bat launcher(s)')
-    check(any('mesh workbench' in b.lower() for b in bats),
+    check(any(b.lower() == 'mpn.bat' for b in bats),
           'the one a user double-clicks is there')
 
     print()

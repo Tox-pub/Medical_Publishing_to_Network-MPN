@@ -54,18 +54,18 @@ def verify(path):
         for rel in (f'python/bin/python{PY_SERIES}',
                     f'python/lib/python{PY_SERIES}/tkinter/__init__.py',
                     'app/src/mesh_aop/cli.py',
-                    'app/src/mesh_workbench/app.py',
+                    'app/src/mpn/app.py',
                     # Renders the manual for the browser. Losing it is silent -
                     # Help falls back to the in-window reader without a word.
                     'app/src/mesh_aop/mdhtml.py',
                     'app/HELP.md', 'app/COMMAND-LINE.md',
                     'wheels', 'requirements.txt', 'README.txt',
-                    'MeSH Workbench', 'mesh-pipeline', 'mesh-uninstall'):
+                    'MPN', 'mpn-pipeline', 'mpn-uninstall'):
             check(get(rel) is not None, f'present: {rel}')
 
         # ------------------------------------------------------ permissions
         print('\n-- permissions (NTFS cannot store these; the builder sets them)')
-        for rel in ('MeSH Workbench', 'mesh-pipeline', f'python/bin/python{PY_SERIES}'):
+        for rel in ('MPN', 'mpn-pipeline', f'python/bin/python{PY_SERIES}'):
             m = get(rel)
             if m:
                 check(m.mode & 0o111, f'executable: {rel}', f'mode {m.mode:o}')
@@ -80,7 +80,7 @@ def verify(path):
 
         # ------------------------------------------------------- launchers
         print('\n-- launchers')
-        for rel in ('MeSH Workbench', 'mesh-pipeline', 'mesh-uninstall'):
+        for rel in ('MPN', 'mpn-pipeline', 'mpn-uninstall'):
             m = get(rel)
             if not m:
                 continue
@@ -90,7 +90,7 @@ def verify(path):
                   'CRLF fails at the shebang on Unix')
             check(b'PYTHONPATH' in body, f'{rel}: puts the app on PYTHONPATH')
 
-        launch = tf.extractfile(get('MeSH Workbench')).read().decode()
+        launch = tf.extractfile(get('MPN')).read().decode()
         check('com.apple.quarantine' in launch,
               'the launcher clears the macOS quarantine flag itself')
         check('--no-index' in launch,

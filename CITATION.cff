@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 title: >-
-  MeSH Workbench: MeSH co-occurrence concept networks for
-  Adverse Outcome Pathways
+  MPN (Medical Publishing to Network): MeSH co-occurrence
+  concept networks for Adverse Outcome Pathways
 message: >-
   If you use this software or the networks it produces in
   published work, please cite it.

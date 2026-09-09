@@ -1,6 +1,6 @@
 # Packaging
 
-Build tooling for distributing **MeSH Workbench**. Nothing here is imported by
+Build tooling for distributing **MPN**. Nothing here is imported by
 the application or the pipeline — these scripts only assemble releases.
 
 | File | Purpose |
@@ -11,7 +11,7 @@ the application or the pipeline — these scripts only assemble releases.
 | `build_unix_bundle.py` | The self-contained Linux and macOS tarballs. |
 | `verify_windows_bundle.py`, `verify_unix_bundle.py` | Check a build before it is published. |
 | `launchers/` | The `.bat` files a user double-clicks, copied verbatim into the zip. |
-| `make_icon.py` | Redraws the application icon into `src/mesh_workbench/assets/`. |
+| `make_icon.py` | Redraws the application icon into `src/mpn/assets/`. |
 
 ### There is no Setup.exe
 
@@ -24,7 +24,7 @@ Setup.exe. Two installers that do the same thing is one more artefact to build,
 verify, hash, upload and support, for no case the other does not cover.
 
 Anyone who installed an older version with it removes it the same way as the
-MSI: **Settings → Apps → MeSH Workbench → Uninstall**.
+MSI: **Settings → Apps → MPN → Uninstall**.
 
 ## Building the Windows release
 
@@ -32,12 +32,12 @@ MSI: **Settings → Apps → MeSH Workbench → Uninstall**.
 python packaging/build_portable_windows.py
 ```
 
-Produces `MeshWorkbench-<version>-win64-portable.zip`, roughly 150 MB. The user
-extracts it and double-clicks **`MeSH Workbench.bat`**.
+Produces `MPN-<version>-win64-portable.zip`, roughly 150 MB. The user
+extracts it and double-clicks **`MPN.bat`**.
 
 ### Everything is built in one place
 
-`D:\mesh_workbench_build`. Every script here resolves it through
+`D:\mpn_build`. Every script here resolves it through
 `build_location.py`, so they cannot disagree.
 
 Deliberately **outside the project**: the tree is ~460 MB, is rebuilt from
@@ -62,12 +62,12 @@ directory), `--venv` (environment to take dependencies from), `--base-python`
 ### What it assembles
 
 ```
-MeshWorkbench/
-  MeSH Workbench.bat                    launcher
-  MeSH Workbench (Troubleshooting).bat  same, with a console attached
+MPN/
+  MPN.bat                    launcher
+  MPN (Troubleshooting).bat  same, with a console attached
   README - Install and First Run.txt
   python/                               embeddable CPython + Tk
-  app/                                  mesh_workbench, mesh_aop, reference data
+  app/                                  mpn, mesh_aop, reference data
 ```
 
 ## Building the installer
@@ -77,7 +77,7 @@ python packaging/build_portable_windows.py   # first - assembles the tree
 python packaging/build_msi_windows.py        # then  - wraps it
 ```
 
-Produces `MeSH-Workbench-<version>-win64.msi`: a directory page, Start-menu and
+Produces `MPN-<version>-win64.msi`: a directory page, Start-menu and
 desktop shortcuts, and an Add/Remove Programs entry.
 
 It installs **the same tree the zip contains**, so the only program that ever
@@ -104,10 +104,10 @@ Four artefacts, all built from the same source:
 
 | Asset | Size | For |
 | --- | --- | --- |
-| `MeSH-Workbench-<version>-win64.msi` | ~94 MB | Windows. `msiexec` performs the install, and that is signed by Microsoft. |
-| `MeshWorkbench-<version>-win64-portable.zip` | ~117 MB | No install at all, or where the installer is refused. Contains `Install.bat`. |
-| `MeshWorkbench-<version>-linux-x86_64.tar.gz` | ~400 MB | Linux, self-contained: its own CPython, Tk and wheels. |
-| `MeshWorkbench-<version>-macos-<arch>.tar.gz` | ~400 MB | macOS, same shape. **Unvalidated** - assembled on Windows and never run on a Mac. |
+| `MPN-<version>-win64.msi` | ~94 MB | Windows. `msiexec` performs the install, and that is signed by Microsoft. |
+| `MPN-<version>-win64-portable.zip` | ~117 MB | No install at all, or where the installer is refused. Contains `Install.bat`. |
+| `MPN-<version>-linux-x86_64.tar.gz` | ~400 MB | Linux, self-contained: its own CPython, Tk and wheels. |
+| `MPN-<version>-macos-<arch>.tar.gz` | ~400 MB | macOS, same shape. **Unvalidated** - assembled on Windows and never run on a Mac. |
 
 ### Repository or release?
 
@@ -136,7 +136,7 @@ against Git LFS quotas.
 
    ```
    python packaging/build_portable_windows.py --out <build dir>
-   python packaging/build_msi_windows.py      --portable <build dir>\MeshWorkbench --out <build dir>
+   python packaging/build_msi_windows.py      --portable <build dir>\MPN --out <build dir>
    python packaging/build_unix_bundle.py      --platform linux --out <build dir>
    python packaging/build_unix_bundle.py      --platform macos --out <build dir>
    ```
@@ -144,20 +144,20 @@ against Git LFS quotas.
    Then verify, before anything is hashed or uploaded:
 
    ```
-   python packaging/verify_windows_bundle.py <build dir>\MeshWorkbench-3.2.10-win64-portable.zip
-   python packaging/verify_unix_bundle.py    <build dir>\MeshWorkbench-3.2.10-linux-x86_64.tar.gz
+   python packaging/verify_windows_bundle.py <build dir>\MPN-3.2.10-win64-portable.zip
+   python packaging/verify_unix_bundle.py    <build dir>\MPN-3.2.10-linux-x86_64.tar.gz
    ```
 
 3. Hash them all, so a download can be verified:
 
    ```
-   certutil -hashfile "<build dir>\MeshWorkbench-3.2.10-win64-portable.zip" SHA256
+   certutil -hashfile "<build dir>\MPN-3.2.10-win64-portable.zip" SHA256
    ```
 
 4. Tag the exact commit the artefacts were built from, and push the tag:
 
    ```
-   git tag -a v3.2.10 -m "MeSH Workbench 3.2.10"
+   git tag -a v3.2.10 -m "MPN 3.2.10"
    git push origin v3.2.10
    ```
 
@@ -167,7 +167,7 @@ against Git LFS quotas.
    With the `gh` CLI it is one command instead:
 
    ```
-   gh release create v3.2.10 --title "MeSH Workbench 3.2.10" --notes-file notes.md *.msi *.zip *.tar.gz
+   gh release create v3.2.10 --title "MPN 3.2.10" --notes-file notes.md *.msi *.zip *.tar.gz
    ```
 
 6. Point the project README's download link at the new release.
@@ -217,7 +217,7 @@ Self-contained tarballs carrying their own CPython, Tk and every wheel, so the
 first run installs offline (`--no-index`) and needs nothing from the machine.
 The Linux bundle also drops a `.desktop` entry into the applications menu.
 
-`pip install mesh_aop_network` remains the lighter route on either platform for
+`pip install mpn` remains the lighter route on either platform for
 anyone who already has Python.
 
 **The macOS bundle is unvalidated.** It is assembled on Windows and has never
