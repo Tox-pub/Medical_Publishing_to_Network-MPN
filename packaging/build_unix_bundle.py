@@ -3,8 +3,8 @@
 build_unix_bundle.py - a self-contained Linux or macOS package, built anywhere.
 
 This can be run on Windows. That is worth stating plainly, because the received
-wisdom is that you cannot build for one operating system on another, and for
-compiled software that is true: PyInstaller, Nuitka and appimagetool all need to
+wisdom is that software cannot be built for one operating system on another,
+and for compiled software that is true: PyInstaller, Nuitka and appimagetool all need to
 run the target's own toolchain, and none of them can cross-compile.
 
 None of that applies here, because this application has nothing to compile.
@@ -192,8 +192,11 @@ def _api_json(url, attempts=4):
            '  per IP address, which CI runners share.\n'))
 
 
-def fetch_python(triple, dest, stripped=True):
-    """Download and unpack a redistributable CPython for the target."""
+def fetch_python(triple, dest, stripped=True, cache_dir=None):
+    """Download and unpack a redistributable CPython for the target.
+
+    The download is cached under the build location, never inside the project.
+    """
     print(f'  interpreter: looking up python-build-standalone')
     release = _api_json(PBS_API)
     suffix = 'install_only_stripped' if stripped else 'install_only'
@@ -209,8 +212,9 @@ def fetch_python(triple, dest, stripped=True):
 
     print(f'  interpreter: {wanted["name"]}  ({wanted["size"]/1e6:.0f} MB)')
     # Cached: the interpreter is tens of megabytes and does not change between
-    # targets rebuilt in the same session.
-    cache_dir = os.path.join(HERE, '_cache')
+    # builds of the same target.
+    cache_dir = cache_dir or os.path.join(
+        build_location.resolve(purpose='Unix bundle'), '_cache')
     os.makedirs(cache_dir, exist_ok=True)
     cached = os.path.join(cache_dir, wanted['name'])
     if os.path.exists(cached) and os.path.getsize(cached) == wanted['size']:
@@ -414,7 +418,7 @@ DESKTOP_ENTRY_EOF
             if command -v update-desktop-database >/dev/null 2>&1; then
                 update-desktop-database "$APPS" >/dev/null 2>&1 || true
             fi
-            echo "Added MPN to your applications menu."
+            echo "Added MPN to the applications menu."
         fi
     fi
 fi
@@ -581,7 +585,8 @@ def build(target, out_dir, stripped=True):
     print(f'\nBuilding {spec["pretty"]}  ({stem})')
     t0 = time.time()
 
-    fetch_python(spec['triple'], staging, stripped=stripped)
+    fetch_python(spec['triple'], staging, stripped=stripped,
+                 cache_dir=os.path.join(out_dir, '_cache'))
     fetch_wheels(spec['wheel_tags'], os.path.join(staging, 'wheels'))
 
     # The application source, installed at first run from this directory.
@@ -616,7 +621,7 @@ def build(target, out_dir, stripped=True):
             shutil.copy2(src, os.path.join(app, f))
 
     # The reference corpus, so the program can draw its figures before anyone
-    # has downloaded 44 GB of PubMed.
+    # has downloaded 50 GB of PubMed.
     ref = os.path.join(REPO, 'data', 'reference_processed')
     if os.path.isdir(ref):
         shutil.copytree(ref, os.path.join(staging, 'reference_processed'),
@@ -646,11 +651,11 @@ def build(target, out_dir, stripped=True):
 BEFORE THE FIRST RUN, ON macOS
     macOS tags everything downloaded through a browser as quarantined, and
     refuses to run unsigned programs carrying that tag. This program is
-    unsigned - signing requires a paid Apple Developer ID - so you will meet
-    that.
+    unsigned - signing requires a paid Apple Developer ID - so macOS refuses
+    it until the tag is cleared.
 
     Clearing the tag needs no password, no Apple account and nothing to pay.
-    The launcher does it for you: open Terminal, change to this folder, and
+    The launcher clears it: open Terminal, change to this folder, and run
 
         ./"MPN"
 
@@ -666,9 +671,11 @@ BEFORE THE FIRST RUN, ON macOS
 
         xattr -dr com.apple.quarantine "<this folder>"
 
-    Nothing here is hidden from you: that command removes one extended
-    attribute from these files and touches nothing else on your Mac.
+    That command removes one extended attribute from these files and changes
+    nothing else on the Mac.
 ''' if is_mac else ''
+    user_root = ('~/Library/Application Support/MPN' if is_mac
+                 else '~/.local/share/MPN')
 
     with open(os.path.join(staging, 'README.txt'), 'w',
               encoding='utf-8', newline='\n') as fh:
@@ -687,23 +694,25 @@ Without a desktop, the pipeline runs on its own:
 
     ./mpn-pipeline --step all
 
-TO CHECK IT WORKS WITHOUT DOWNLOADING 44 GB
+TO CHECK IT WORKS WITHOUT DOWNLOADING 50 GB
 
-    Turn on "Use bundled reference data" on the Folders tab of Settings, then
+    Turn on "Use bundled reference data" on the Search tab of Settings, then
     run Step 4 - Figures. The reference corpus is in this folder, so that
     draws every figure and the PRISMA report from data already on disk.
 
-WHERE YOUR FILES GO
+WHERE FILES GO
 
     The program is self-contained, but what it produces is not - so that a
     database survives replacing the program, and two people on one machine do
-    not share a results folder. On the first run you are asked where these
-    should live. Answer with anything you like; the defaults are:
+    not share a results folder. The first run asks where these should live;
+    the defaults are:
 
-        ~/.local/share/MPN/data      downloads and databases
-                                                THIS IS THE BIG ONE, ~52 GB
-        ~/Documents/MPN              your results and figures
-        ~/.local/share/MPN           settings and logs
+        {user_root}/data
+            downloads and databases - the large one, about 60 GB
+        ~/Documents/MPN
+            results and figures
+        {user_root}
+            settings and logs
 
     The Folders tab shows the paths actually in use at any time.
 
@@ -711,8 +720,8 @@ TO UNINSTALL
 
     ./mpn-uninstall
 
-    That lists everything the program put outside this folder, tells you how
-    much space each takes, and asks before removing anything. Then delete this
+    That lists everything the program put outside this folder, with the space
+    each takes, and asks before removing anything. Then delete this
     folder and nothing remains.
 
     Deleting the folder ALONE is not enough - it can leave tens of gigabytes
@@ -736,8 +745,6 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[1])
     ap.add_argument('--target', choices=sorted(TARGETS), default='linux')
     ap.add_argument('--all', action='store_true', help='build every target')
-    # Defaulted to ~/Documents/mpn_build, which is why the Linux and
-    # macOS tarballs ended up on a different drive from the Windows ones.
     ap.add_argument('--out', default=None,
                     help=f'where to write the bundle '
                          f'(default: {build_location.BUILD_ROOT})')

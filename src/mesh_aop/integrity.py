@@ -108,7 +108,7 @@ def check_sqlite(path, table=None, quick=True):
     try:
         if quick:
             # quick_check walks the b-tree structure without the full O(n log n)
-            # integrity_check, which on an 8 GB database takes long enough that
+            # integrity_check, which on a 10 GB database takes long enough that
             # nobody would ever run it.
             result = conn.execute('PRAGMA quick_check(1)').fetchone()
             if result and str(result[0]).lower() != 'ok':
@@ -211,7 +211,7 @@ def check_master_db(db_path, deep=False):
 
     `deep=False` is what runs before every pipeline step: open it, structural
     quick_check, confirm the table has rows, and compare against the recorded
-    size. That is a second or two even on 8 GB. `deep=True` runs the full
+    size. That is a second or two even on 10 GB. `deep=True` runs the full
     integrity_check, which is minutes, and is offered only on request.
     """
     status, detail, rows = check_sqlite(db_path, 'master_mesh_annotations', quick=True)

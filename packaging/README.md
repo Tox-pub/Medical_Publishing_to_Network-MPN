@@ -1,199 +1,187 @@
 # Packaging
 
-Build tooling for distributing **MPN**. Nothing here is imported by
-the application or the pipeline — these scripts only assemble releases.
+Build tooling for distributing **MPN**. Nothing here is imported by the
+application or the pipeline; these scripts only assemble releases.
 
 | File | Purpose |
 | --- | --- |
-| `build_portable_windows.py` | Produces the download-and-run Windows zip. Run this first. |
-| `build_msi_windows.py` | Wraps that zip's tree in an `.msi`. |
+| `build_location.py` | The single output location every build script resolves. |
+| `build_portable_windows.py` | Assembles the Windows application tree and zips it. Run this first. |
+| `build_msi_windows.py` | Wraps that tree in an `.msi`. |
 | `windows_msi.wxs` | The WiX source it compiles. |
 | `build_unix_bundle.py` | The self-contained Linux and macOS tarballs. |
 | `verify_windows_bundle.py`, `verify_unix_bundle.py` | Check a build before it is published. |
-| `launchers/` | The `.bat` files a user double-clicks, copied verbatim into the zip. |
+| `launchers/` | The `.bat` files copied verbatim into the Windows tree. |
+| `install.sh` | Installs a source checkout into a private virtual environment on Linux or macOS. |
 | `make_icon.py` | Redraws the application icon into `src/mpn/assets/`. |
+| `make_third_party_notices.py` | Regenerates `THIRD-PARTY-NOTICES.md` from a built bundle. |
+| `sync_notebooks.py` | Regenerates `src/mesh_aop_notebooks/` from the modules. |
+| `where_are_my_files.py` | Prints where a copy keeps its settings, data and results. |
 
-### There is no Setup.exe
+## Output location
 
-There was, built with Inno Setup, and it was dropped. It installed the same tree
-as the MSI, from the same portable build, to the same place — the only real
-difference being that a freshly compiled `Setup.exe` is an unsigned binary and
-the MSI is executed by `msiexec`, which Microsoft signs. On a managed machine
-that difference decides whether the install runs at all, and it never favoured
-Setup.exe. Two installers that do the same thing is one more artefact to build,
-verify, hash, upload and support, for no case the other does not cover.
+Every build writes to **`D:\mpn_build`**, resolved through `build_location.py`.
+The location is outside the project because the working copy is cloud-synced and
+a build tree is about 460 MB of reproducible output; `.gitignore` stops git, not
+the sync client.
 
-Anyone who installed an older version with it removes it the same way as the
-MSI: **Settings → Apps → MPN → Uninstall**.
+**If D: is not attached, the build stops** and writes nothing. To build
+elsewhere deliberately, pass `--out <path>` for one run, or set `MESH_BUILD_OUT`
+for a session. CI sets `MESH_BUILD_OUT`, because a runner has no D:.
 
-## Building the Windows release
+Downloads reused between builds (the embeddable CPython for Windows, and the
+python-build-standalone interpreters for Linux and macOS) are cached in `_cache`
+inside the output location.
 
-```bash
+## Building a release
+
+Build all four artefacts from the same commit, in this order:
+
+```
 python packaging/build_portable_windows.py
+python packaging/build_msi_windows.py
+python packaging/build_unix_bundle.py --target linux
+python packaging/build_unix_bundle.py --target macos-arm
 ```
 
-Produces `MPN-<version>-win64-portable.zip`, roughly 150 MB. The user
-extracts it and double-clicks **`MPN.bat`**.
+`build_msi_windows.py` wraps the most recent portable tree in the output location
+and writes the `.msi` beside it; `--portable` and `--out` override both.
 
-### Everything is built in one place
+Verify every artefact before hashing or uploading it:
 
-`D:\mpn_build`. Every script here resolves it through
-`build_location.py`, so they cannot disagree.
+```
+python packaging/verify_windows_bundle.py D:\mpn_build\MPN-<version>-win64-portable.zip D:\mpn_build\MPN-<version>-win64.msi
+python packaging/verify_unix_bundle.py D:\mpn_build\MPN-<version>-linux-x86_64.tar.gz D:\mpn_build\MPN-<version>-macos-arm64.tar.gz
+```
 
-Deliberately **outside the project**: the tree is ~460 MB, is rebuilt from
-scratch every run, and the working copy is cloud-synced, so keeping it here
-would upload half a gigabyte of reproducible output on every build.
-`.gitignore` stops git, not the sync client.
+| Artefact | Size | For |
+| --- | --- | --- |
+| `MPN-<version>-win64.msi` | ~90 MB | Windows. `msiexec` performs the install, and it is signed by Microsoft. |
+| `MPN-<version>-win64-portable.zip` | ~112 MB | Windows without installing, or where the installer is refused. Contains `Install.bat`. |
+| `MPN-<version>-linux-x86_64.tar.gz` | ~211 MB | Linux, self-contained: its own CPython, Tk and wheels. |
+| `MPN-<version>-macos-arm64.tar.gz` | ~162 MB | macOS on Apple silicon, the same shape. **Unvalidated:** assembled on Windows and not yet run on a Mac. |
 
-**If D: is not attached, the build stops.** It does not pick somewhere else.
-Each script used to decide this for itself — the portable build fell back into
-`packaging/portable`, the Unix bundles defaulted to `~/Documents`, and the MSI
-wrote beside whatever tree it was handed. The result was four folders across
-two drives holding several superseded copies of the same artefacts, and a build
-run without D: quietly writing half a gigabyte into the synced project folder.
+Options for `build_portable_windows.py`: `--out` (output location), `--repo`
+(project directory), `--venv` (environment to copy dependencies from; defaults
+to the interpreter running the script), `--base-python` (full CPython install to
+take the Tk runtime from), `--no-zip`.
 
-Override deliberately when you mean to: `--out <path>` for one run, or
-`MESH_BUILD_OUT` for a session. CI sets the latter, because a runner has no D:.
+Options for `build_unix_bundle.py`: `--target` (`linux`, `linux-arm`,
+`macos-arm`, `macos-intel`), `--all`, `--out`, `--full-python` (unstripped
+interpreter), `--repack` (re-archive an assembled staging folder without
+downloading anything).
 
-Options: `--out` (build directory, or set `MESH_BUILD_OUT`), `--repo` (project
-directory), `--venv` (environment to take dependencies from), `--base-python`
-(full CPython install to take the Tk runtime from), `--no-zip`.
-
-### What it assembles
+### The Windows tree
 
 ```
 MPN/
-  MPN.bat                    launcher
-  MPN (Troubleshooting).bat  same, with a console attached
+  MPN.bat                             launcher
+  MPN (Troubleshooting).bat           the same, with a console attached
+  mpn-pipeline.bat                    the pipeline without the window
+  Install.bat, Uninstall.bat, Create desktop shortcut.bat
   README - Install and First Run.txt
-  python/                               embeddable CPython + Tk
-  app/                                  mpn, mesh_aop, reference data
+  portable.marker                     keeps settings, data and results in this folder
+  python/                             embeddable CPython + Tk
+  app/                                mpn, mesh_aop, reference data
 ```
 
-## Building the installer
+### The installer
 
-```bash
-python packaging/build_portable_windows.py   # first - assembles the tree
-python packaging/build_msi_windows.py        # then  - wraps it
-```
-
-Produces `MPN-<version>-win64.msi`: a directory page, Start-menu and
-desktop shortcuts, and an Add/Remove Programs entry.
-
-It installs **the same tree the zip contains**, so the only program that ever
-executes is still the PSF-signed `python.exe`. Shortcuts point at
-`pythonw.exe app\launch.py` rather than at a `.bat`, so nothing flashes a
-console. The `.bat` files and the portable README are excluded from the install -
-they would be telling an installed copy to use launchers it does not have.
-
-Installs per-user, so there is no administrator prompt and nothing for a managed
-machine to refuse.
+The MSI installs **the same tree the zip contains**, minus the `.bat` files,
+`portable.marker` and the portable README, so the only program that executes is
+still the PSF-signed `python.exe`. Shortcuts point at `pythonw.exe app\launch.py`,
+so no console appears. It installs per user: there is no administrator prompt
+and nothing for a managed machine to refuse.
 
 Uninstalling through Windows removes what the installer wrote, then offers to
 run the application's own uninstaller for the downloaded data and the
-temp-folder workspace - which Windows would otherwise leave behind, at tens of
+temp-folder workspace, which Windows would otherwise leave behind at tens of
 gigabytes. Results are kept.
 
-The MSI takes a while on "Computing space requirements": it carries one
-component per file, and there are nearly ten thousand. That is `CostFinalize`
-doing its job, not a hang.
+The MSI spends a while on "Computing space requirements". It carries one
+component per file, nearly ten thousand of them; that is `CostFinalize` working,
+not a hang.
 
-## Publishing a release
+Building the MSI requires WiX 5 and its two extensions at the same version:
 
-Four artefacts, all built from the same source:
+```
+dotnet tool install --global wix --version 5.0.2
+wix extension add --global WixToolset.UI.wixext/5.0.2
+wix extension add --global WixToolset.Util.wixext/5.0.2
+```
 
-| Asset | Size | For |
-| --- | --- | --- |
-| `MPN-<version>-win64.msi` | ~94 MB | Windows. `msiexec` performs the install, and that is signed by Microsoft. |
-| `MPN-<version>-win64-portable.zip` | ~117 MB | No install at all, or where the installer is refused. Contains `Install.bat`. |
-| `MPN-<version>-linux-x86_64.tar.gz` | ~400 MB | Linux, self-contained: its own CPython, Tk and wheels. |
-| `MPN-<version>-macos-<arch>.tar.gz` | ~400 MB | macOS, same shape. **Unvalidated** - assembled on Windows and never run on a Mac. |
+WiX 6 and later require accepting a paid licence agreement.
 
-### Repository or release?
+## Repository or release
 
-**The repository holds source only.** Build scripts, launchers, the WiX source,
-the icon generator — everything needed to *produce* an artefact, and none of the
-artefacts themselves. `packaging/portable/` and `packaging/dist/` are gitignored
-precisely so a build cannot land in a commit.
+**The repository holds source only:** build scripts, launchers, the WiX source
+and the icon generator. Everything needed to *produce* an artefact is here, and
+none of the artefacts themselves.
 
-**The release holds the artefacts.** GitHub rejects any file over 100 MB
-committed to a repository; release assets are capped at 2 GB each. Three of the
-four exceed the repository limit, and the one that would fit belongs in a
-release too, because a binary committed to git history stays there forever and
-every clone pays for it.
+**The release holds the artefacts.** GitHub rejects any file over 100 MB in a
+repository, while release assets are capped at 2 GB each. A binary committed to
+git history stays there permanently, and every clone pays for it.
 
-Releases are free, including the bandwidth to serve them, and they do not count
-against Git LFS quotas.
+## Publishing
 
-### Steps
-
-1. Confirm the version agrees everywhere. Ten files carry it, and a mismatch
-   means an asset whose name disagrees with the tag it hangs under.
-
-2. Build them all, onto an internal disk. Building from removable media took
-   roughly three times as long here, and the MSI failed mid-read with "the
-   volume for a file has been externally altered".
-
-   ```
-   python packaging/build_portable_windows.py --out <build dir>
-   python packaging/build_msi_windows.py      --portable <build dir>\MPN --out <build dir>
-   python packaging/build_unix_bundle.py      --platform linux --out <build dir>
-   python packaging/build_unix_bundle.py      --platform macos --out <build dir>
-   ```
-
-   Then verify, before anything is hashed or uploaded:
+1. **Confirm the version agrees everywhere it is declared.** After changing it,
+   `git grep -n "<previous version>"` must return nothing outside history. It
+   is declared in `pyproject.toml`, `CITATION.cff`, `src/mesh_aop/__init__.py`,
+   `src/mesh_aop/citation.py`, `src/mpn/__init__.py`, `src/mpn/app.py`,
+   `packaging/build_portable_windows.py`, `packaging/build_msi_windows.py`,
+   `packaging/windows_msi.wxs`, `packaging/install.sh`,
+   `packaging/launchers/Install.bat` and `INSTALL.md`; `build_unix_bundle.py`
+   reads it from `pyproject.toml`. A mismatch produces an asset whose name
+   disagrees with its tag, and a wrong `AppVersion` breaks in-place MSI
+   upgrades.
+2. **Build and verify** all four artefacts, as above.
+3. **Hash them**, so a download can be verified:
 
    ```
-   python packaging/verify_windows_bundle.py <build dir>\MPN-3.2.10-win64-portable.zip
-   python packaging/verify_unix_bundle.py    <build dir>\MPN-3.2.10-linux-x86_64.tar.gz
+   certutil -hashfile "D:\mpn_build\MPN-<version>-win64.msi" SHA256
    ```
 
-3. Hash them all, so a download can be verified:
+4. **Tag the exact commit** the artefacts were built from, and push the tag:
 
    ```
-   certutil -hashfile "<build dir>\MPN-3.2.10-win64-portable.zip" SHA256
+   git tag -a v<version> -m "MPN <version>"
+   git push origin v<version>
    ```
 
-4. Tag the exact commit the artefacts were built from, and push the tag:
+   A pushed tag runs the release workflow, which builds the MSI and both
+   tarballs and tests each on a real Windows, Linux or macOS runner. It does not
+   publish anything.
+
+5. **Publish.** On GitHub: **Releases → Draft a new release**, choose the tag,
+   attach the four files, paste the checksums into the notes, and publish. With
+   the `gh` CLI:
 
    ```
-   git tag -a v3.2.10 -m "MPN 3.2.10"
-   git push origin v3.2.10
+   gh release create v<version> --title "MPN <version>" --notes-file notes.md *.msi *.zip *.tar.gz
    ```
 
-5. On GitHub: **Releases** → **Draft a new release** → choose the tag → attach
-   the four files → paste the checksums into the notes → publish.
+   Running the release workflow by hand with `publish` ticked creates the
+   release from the CI build instead. That release carries the MSI and the two
+   tarballs, but not the portable zip.
 
-   With the `gh` CLI it is one command instead:
-
-   ```
-   gh release create v3.2.10 --title "MPN 3.2.10" --notes-file notes.md *.msi *.zip *.tar.gz
-   ```
-
-6. Point the project README's download link at the new release.
-
-A tag is not required to draft a release — GitHub will create one — but tagging
-first is worth the extra step, since it records exactly which commit produced
-the binaries.
-
-### Why this rather than a frozen executable
+## Why an interpreter rather than a frozen executable
 
 The only program a user runs is `python.exe` from the official embeddable
 distribution, **signed by the Python Software Foundation**. That side-steps the
 whole trust problem: no code-signing certificate to buy, no SmartScreen
 reputation to earn, and none of the antivirus false positives PyInstaller
-bundles routinely attract. On a managed Windows device a freshly built unsigned
+bundles routinely attract. On a managed Windows device a newly built unsigned
 binary can be refused outright, while a signed interpreter runs normally.
 
 Dependencies are copied from a working virtual environment rather than installed
 fresh, so a release ships the exact versions the published results were produced
 with.
 
-### Three things that will break it if changed carelessly
+### Three things that break the Windows build if changed carelessly
 
 1. **`Lib` must stay on the path in `python3xx._pth`.** The embeddable build
    serves the standard library from a zip and puts only `.` on `sys.path`, so
-   anything added under `Lib/` — which is how tkinter arrives — is invisible
+   anything added under `Lib/` (which is how tkinter arrives) is invisible
    without it.
 2. **Do not prune directories that look like test suites.** `numpy.testing` is
    public API that scipy imports while loading; removing it breaks every
@@ -205,23 +193,23 @@ The embeddable package also ships **without tkinter**, so `add_tkinter()` copies
 `Lib/tkinter`, `_tkinter.pyd`, the Tcl/Tk DLLs and the `tcl/` runtime from a full
 CPython install of the same version.
 
-
 ## macOS and Linux
 
-```bash
-python packaging/build_unix_bundle.py --platform linux
-python packaging/build_unix_bundle.py --platform macos
+```
+python packaging/build_unix_bundle.py --target linux
+python packaging/build_unix_bundle.py --target macos-arm
 ```
 
 Self-contained tarballs carrying their own CPython, Tk and every wheel, so the
 first run installs offline (`--no-index`) and needs nothing from the machine.
-The Linux bundle also drops a `.desktop` entry into the applications menu.
+The Linux bundle also adds a `.desktop` entry to the applications menu.
 
-`pip install mpn` remains the lighter route on either platform for
-anyone who already has Python.
+For anyone who already has Python, installing a source checkout with
+`packaging/install.sh` or `pip install .` is the lighter route on either
+platform.
 
-**The macOS bundle is unvalidated.** It is assembled on Windows and has never
-been run on a Mac. `verify_unix_bundle.py` checks what can be checked from the
-outside — the executable bit NTFS cannot store, wheels built for the wrong
-Python or architecture, a launcher written with CRLF — but that is not the same
-as running it, and the README should not imply otherwise until it has been.
+**The macOS bundle is unvalidated.** It is assembled on Windows and has not been
+run on a Mac. `verify_unix_bundle.py` checks what can be checked from the
+outside (the executable bit NTFS cannot store, wheels built for the wrong Python
+or architecture, a launcher written with CRLF), but that is not the same as
+running it, and the documentation states as much until a Mac run confirms it.

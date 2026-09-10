@@ -39,10 +39,10 @@ del "%VBS%" >nul 2>&1
 
 if not "%RC%"=="0" (
   echo [X] The shortcut could not be created ^(code %RC%^).
-  echo     Some managed machines block scripted shortcut creation. You can
-  echo     right-click "MPN.bat" and choose Send to ^> Desktop instead.
+  echo     Some managed machines block scripted shortcut creation. Instead,
+  echo     right-click "MPN.bat" and choose Send to ^> Desktop.
 ) else (
-  echo Done - "MPN" is on your Desktop.
+  echo Done - "MPN" is on the Desktop.
 )
 echo.
 pause

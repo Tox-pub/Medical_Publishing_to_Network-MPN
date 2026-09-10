@@ -357,7 +357,7 @@ def run_interactive_wizard(config, step: str) -> bool:
         if db_age_days > 330:
             print(f"  [!] Master DB Found: {db_status}")
             print(f"      WARNING: Database is {int(db_age_days)} days old. A new yearly NLM Baseline is likely available.")
-            ans = input("  Rebuild entirely with the newest Yearly Baseline (~40GB)? [y/n/Enter to skip]: ").strip().lower()
+            ans = input("  Rebuild entirely with the newest Yearly Baseline (~50 GB)? [y/n/Enter to skip]: ").strip().lower()
 
             if ans in ['y', 'yes']:
                 params['_run_baseline_etl'] = True

@@ -156,11 +156,11 @@ TABS = [
           'are created inside: raw (the PubMed archives and the master '
           'annotation database) and processed (networks and score databases).',
           'Default: empty, meaning a private folder under your user profile. '
-          'ABOUT ~55 GB ENDS UP HERE - roughly 45 GB of downloaded archive and '
+          'ABOUT 60 GB ENDS UP HERE - about 50 GB of downloaded archive and '
           'a 10 GB database built from it.',
           'Choose this before downloading anything, and choose a drive with '
-          '60 GB free. The archive can be deleted afterwards from the Data '
-          'setup screen, which gets most of it back, but moving ~55 GB later '
+          '80 GB free. The archive can be deleted afterwards from the Data '
+          'setup screen, which gets most of it back, but moving 60 GB later '
           'is far slower than picking the right drive now.'),
         F('directories.results_dir', 'Results folder', 'text', '',
           'Your own outputs: figures, workbooks, the run ledger and the workflow '

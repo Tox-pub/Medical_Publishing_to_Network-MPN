@@ -2,24 +2,18 @@
 """
 build_location.py - the one place a build is allowed to write.
 
-Every build script used to decide this for itself, and they disagreed. The
-Windows portable build preferred D: and fell back into the project folder; the
-MSI wrote beside whatever tree it was pointed at; the Unix bundles defaulted to
-~/Documents. Run them over a few weeks and the output is in four places, three
-of them wrong, with two hundred files nobody can account for and two copies of
-the same superseded tree on different drives.
-
-So there is one answer now, and it is enforced rather than preferred:
+Every build script resolves its output directory here, so they cannot disagree.
+The answer is enforced rather than preferred:
 
     D:\\mpn_build
 
-If D: is not attached, the build STOPS. It does not quietly pick somewhere
-else. Falling back is what scattered the output in the first place, and the
-fallback location was the cloud-synced working copy - so a build nobody asked
-for would upload half a gigabyte of reproducible junk.
+If D: is not attached, the build STOPS rather than choosing somewhere else. The
+obvious fallback is the project folder, which is cloud-synced, so a build there
+would upload half a gigabyte of reproducible output.
 
-MESH_BUILD_OUT still overrides, for CI, which has no D: and must write into the
-workspace. That is a deliberate answer from the caller rather than a guess.
+--out overrides for one run and MESH_BUILD_OUT for a session. CI uses the
+environment variable, because a runner has no D: and must write into its
+workspace.
 """
 
 import os
@@ -71,11 +65,9 @@ def resolve(explicit=None, purpose='build'):
 
     sys.exit(
         f'\nThe {purpose} needs {BUILD_ROOT}, and it is not available.\n\n'
-        f'  D: is where every artefact for this project lives. Attach it and\n'
+        f'  D: is where every artefact for this project is built. Attach it and\n'
         f'  run this again.\n\n'
-        f'  Nothing was written. This used to fall back to a folder inside the\n'
-        f'  cloud-synced working copy, which is how the output ended up in four\n'
-        f'  places at once - so it stops instead.\n\n'
+        f'  Nothing was written.\n\n'
         f'  To build somewhere else on purpose:\n'
         f'      --out <path>            for this run\n'
         f'      set {_ENV}=<path>   for the session (CI uses this)\n')

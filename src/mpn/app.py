@@ -161,7 +161,7 @@ class Workbench(tk.Tk):
         # is a first run. Testing for the file later cannot work: seeding the
         # defaults here creates it, so by the time the dialog asked, the answer
         # was always "it exists" and the dialog never appeared at all - nobody
-        # was ever asked where to put the ~52 GB it is there to ask about.
+        # was ever asked where to put the ~60 GB it is there to ask about.
         self.first_run = not os.path.exists(self.cfg_path)
         if self.first_run:
             return self._write_default_cfg()

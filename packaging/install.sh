@@ -61,7 +61,7 @@ if [ "$UNINSTALL" = "1" ]; then
         echo
         echo "  To remove downloaded data and results as well, run:"
         echo "    $PREFIX/venv/bin/mpn-uninstall"
-        echo "  (do that first if you want it - the command disappears with the next step)"
+        echo "  (run it first to remove those - the command disappears with the next step)"
         echo
         printf "  Continue removing the application? [y/N] "
         read -r reply
@@ -94,7 +94,7 @@ if [ -z "$PYTHON" ]; then
         echo "    brew install python@3.12          # or python.org/downloads" >&2
     else
         echo "    sudo apt install python3.12 python3.12-venv python3-tk" >&2
-        echo "    (or the equivalent for your distribution)" >&2
+        echo "    (or the equivalent for the distribution)" >&2
     fi
     exit 1
 fi
@@ -155,8 +155,8 @@ else
   <key>CFBundleName</key><string>$APP_NAME</string>
   <key>CFBundleDisplayName</key><string>$APP_NAME</string>
   <key>CFBundleIdentifier</key><string>se.ki.mpn</string>
-  <key>CFBundleVersion</key><string>3.1.0</string>
-  <key>CFBundleShortVersionString</key><string>3.1.0</string>
+  <key>CFBundleVersion</key><string>3.2.10</string>
+  <key>CFBundleShortVersionString</key><string>3.2.10</string>
   <key>CFBundleExecutable</key><string>run</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>NSHighResolutionCapable</key><true/>
@@ -172,11 +172,11 @@ cat <<EOF
 
 Installed.
 
-  Launch it        from your application menu, or run:
+  Launch it        from the application menu, or run:
                      $BIN
   Command line     $PREFIX/venv/bin/mpn-pipeline --help
   Remove it        $0 --uninstall
 
-Settings and logs live under your user profile; results and data are chosen
+Settings and logs live under the user profile; results and data are chosen
 the first time the application runs.
 EOF

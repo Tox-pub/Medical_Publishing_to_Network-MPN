@@ -1,18 +1,19 @@
 # Installing MPN (Medical Publishing to Network)
 
-**One file per system.** Download the one with your system's name on it from
-[Releases](https://github.com/Tox-pub/Medical_Publishing_to_Network-MPN/releases), and
-ignore the other two.
+**One file per system.** Download the file for the system in use from
+[Releases](https://github.com/Tox-pub/Medical_Publishing_to_Network-MPN/releases).
+The others are not needed.
 
 | System | File | What to do |
 | :--- | :--- | :--- |
-| **Windows** | `MPN-3.2.10-windows.msi` | Double-click it. |
-| **Linux** | `MPN-3.2.10-linux-x86_64.tar.gz` | Extract, then `./"MPN"` — it adds itself to your applications menu |
-| **macOS** | `MPN-3.2.10-macos-arm64.tar.gz` | Extract, then `./"MPN"` |
+| **Windows** | `MPN-3.2.10-win64.msi` | Double-click it. |
+| **Windows, without installing** | `MPN-3.2.10-win64-portable.zip` | Extract, then double-click `MPN.bat`. |
+| **Linux** | `MPN-3.2.10-linux-x86_64.tar.gz` | Extract, then run `./"MPN"`. It adds itself to the applications menu. |
+| **macOS** | `MPN-3.2.10-macos-arm64.tar.gz` | Extract, then run `./"MPN"` from Terminal. |
 
-**Every one carries its own Python.** There is nothing to install first - no
-system Python, no `python3-tk`, no administrator rights, and nothing written
-outside your own profile.
+**Every build carries its own Python.** Nothing needs installing first: no
+system Python, no `python3-tk`, no administrator rights, and nothing is written
+outside the user's own profile.
 
 - [Windows](#windows)
 - [Linux](#linux)
@@ -26,21 +27,36 @@ outside your own profile.
 
 ## Windows
 
-Double-click `MPN-3.2.10-windows.msi`. It asks where to install,
-offers a desktop and Start-menu shortcut, and appears in Add/Remove Programs
-afterwards.
+### Installer
 
-It carries its own Python, so nothing needs installing first, and it is
-executed by `msiexec.exe`, which is part of Windows and signed by Microsoft.
-That matters on a managed machine: a freshly built `.exe` installer has no
-signature and no prevalence, and Defender Exploit Guard refuses it outright
-with `0x80070005` and nothing to click. An MSI introduces no new binary.
+Double-click `MPN-3.2.10-win64.msi`. It asks where to install, offers desktop
+and Start-menu shortcuts, and adds an entry to Add/Remove Programs.
 
-Silent install, for deploying to several machines:
+The installer carries its own Python and is executed by `msiexec.exe`, which is
+part of Windows and signed by Microsoft. On a managed machine this matters: a
+newly built `.exe` installer has no signature and no reputation, and Defender
+Exploit Guard can refuse it outright with `0x80070005`. An MSI introduces no new
+binary.
+
+To install silently, for deployment to several machines:
 
 ```
-msiexec /i "MPN-3.2.10-windows.msi" /qn
+msiexec /i "MPN-3.2.10-win64.msi" /qn
 ```
+
+### Portable zip
+
+Extract `MPN-3.2.10-win64-portable.zip` to any writable folder, open the
+extracted `MPN` folder and double-click `MPN.bat`. Nothing is installed.
+
+| File | Purpose |
+| :--- | :--- |
+| `MPN.bat` | Starts the application. |
+| `MPN (Troubleshooting).bat` | Starts the same application with a console attached, so error messages stay on screen. |
+| `Create desktop shortcut.bat` | Adds a desktop icon that points at this folder. |
+| `Install.bat` | Copies the program into the user profile, with a Start-menu entry and an Add/Remove Programs entry. |
+| `mpn-pipeline.bat` | Runs the pipeline from a shell. See [COMMAND-LINE.md](COMMAND-LINE.md). |
+| `Uninstall.bat` | Removes the program's data outside the folder. |
 
 ---
 
@@ -54,20 +70,20 @@ cd MPN-3.2.10-linux-x86_64
 ./"MPN"
 ```
 
-That is all. The folder carries its own Python, its own Tk, and every library
-already compiled - **you do not need a system Python, and you do not need
-`python3-tk`**. The first run unpacks the libraries from `wheels/`, takes about
-a minute, and needs no network.
+The folder carries its own Python, its own Tk and every library, already
+compiled. **No system Python and no `python3-tk` are required.** The first run
+unpacks the libraries from `wheels/`, takes about a minute, and needs no
+network.
 
-**It appears in your applications menu after that first launch.** A `.desktop`
-entry has to name an absolute path, and that is not known until you unpack the
-folder somewhere, so it cannot be shipped ready-made - the launcher writes it
-the first time it runs, to `~/.local/share/applications/mpn.desktop`.
-No root, nothing outside your own home directory, and it is rewritten if you
-later move the folder. `./mpn-uninstall` removes it again. If your desktop does
-not pick it up immediately, log out and back in.
+**MPN appears in the applications menu after the first launch.** A `.desktop`
+entry must name an absolute path, which is not known until the folder is
+unpacked, so the launcher writes the entry on first run, to
+`~/.local/share/applications/mpn.desktop`. This needs no root and writes nothing
+outside the home directory, and the entry is rewritten if the folder moves.
+`./mpn-uninstall` removes it. If the desktop does not show the entry
+immediately, log out and back in.
 
-Without a desktop:
+To run without a desktop:
 
 ```
 ./mpn-pipeline --step all
@@ -77,10 +93,10 @@ Without a desktop:
 
 ## macOS
 
-**Yes, this runs on a Mac without paying Apple anything.**
+**MPN runs on a Mac without an Apple Developer account or any payment.**
 
-Download `MPN-3.2.10-macos-arm64.tar.gz` (Apple silicon), extract it,
-then **open Terminal**, change to the extracted folder and run:
+Download `MPN-3.2.10-macos-arm64.tar.gz` (Apple silicon) and extract it. Open
+**Terminal**, change to the extracted folder and run:
 
 ```
 ./"MPN"
@@ -88,103 +104,113 @@ then **open Terminal**, change to the extracted folder and run:
 
 ### Why Terminal, and not a double-click
 
-macOS tags everything downloaded through a browser with a `com.apple.quarantine`
-attribute, and Gatekeeper refuses to run unsigned programs carrying it. This
-program is unsigned, because signing requires a paid Apple Developer ID. So the
-tag has to be cleared once.
+macOS tags every file downloaded through a browser with a
+`com.apple.quarantine` attribute, and Gatekeeper refuses to run unsigned
+programs that carry it. MPN is unsigned, because signing requires a paid Apple
+Developer ID, so the attribute must be cleared once.
 
 Clearing it needs **no password, no Apple account and no payment**. The launcher
-does it for you: it is a shell script, which macOS reads with its own signed
-`/bin/sh`, so it is not itself blocked and can clear the flag from everything
-else in the folder. You will see it say so on the first run.
+clears it: the launcher is a shell script, read by macOS's own signed `/bin/sh`,
+so it is not blocked itself and can clear the attribute from everything else in
+the folder. It reports this on the first run.
 
-Start it from Terminal rather than Finder for that first run - Finder will
-either open the script in a text editor or refuse it. Afterwards, either works.
+Start the first run from Terminal, not Finder. Finder either opens the script in
+a text editor or refuses it. After the first run, either works.
 
-### Doing it by hand instead
+### Clearing the attribute by hand
 
-If you would rather not have a script change attributes on your behalf:
+To clear the attribute without the launcher:
 
 ```
 xattr -dr com.apple.quarantine "/path/to/MPN-3.2.10-macos-arm64"
 ```
 
-That removes one extended attribute from the files in that folder and touches
-nothing else on your Mac. `xattr` is part of macOS.
+This removes one extended attribute from the files in that folder and changes
+nothing else. `xattr` is part of macOS.
 
 ### If macOS still refuses
 
-On macOS Sequoia and later, the override moved: **System Settings → Privacy &
-Security**, scroll to the bottom, and press **Open Anyway** next to the blocked
-item. That button appears only after the first refusal.
+On macOS Sequoia and later, open **System Settings → Privacy & Security**,
+scroll to the bottom, and press **Open Anyway** next to the blocked item. The
+button appears only after the first refusal.
 
 ### Intel Macs
 
-The published build is for Apple silicon. An Intel build is one command away -
-`python packaging/build_unix_bundle.py --target macos-intel` - and can be added
-to a release on request.
+The published build is for Apple silicon. An Intel build is produced with
+`python packaging/build_unix_bundle.py --target macos-intel` and can be added to
+a release on request.
 
 ---
 
 ## If a download is blocked
 
-Two things can stop a fresh download from running, and they look similar but are
-not the same.
+Two different things can stop a downloaded file from running.
 
-**A warning you can dismiss.** *"Windows protected your PC"* means SmartScreen
-has not seen this file before. Click **More info → Run anyway**. Expected for
-any installer without a purchased code-signing certificate.
+**A warning that can be dismissed.** *"Windows protected your PC"* means
+SmartScreen has not seen the file before. Click **More info → Run anyway**. This
+is expected for any installer without a purchased code-signing certificate.
 
-**A refusal you cannot dismiss.** *"Blocked an operation that is not allowed by
-your IT administrator"*, or error `0x80070005`, means a security policy —
-usually Defender Exploit Guard — has refused the file because it is newly
-compiled and unsigned. There is nothing to click through.
+**A refusal that cannot be dismissed.** *"Blocked an operation that is not
+allowed by your IT administrator"*, or error `0x80070005`, means a security
+policy, usually Defender Exploit Guard, has refused the file because it is a
+newly compiled, unsigned executable. There is nothing to click through.
 
-If that happens the `.msi` is the route that works: it is executed by `msiexec.exe`, which is part of Windows and signed by Microsoft, so no unsigned binary is introduced.
-Neither creates a new executable, so neither trips that rule.
+Use the `.msi` in that case. It is executed by `msiexec.exe`, which is part of
+Windows and signed by Microsoft, so no unsigned binary is introduced. Where the
+MSI is refused as well, use the portable zip: the only program it runs is
+`python.exe`, signed by the Python Software Foundation.
 
-**A file that arrived over the network** may also be flagged. Right-click it →
-**Properties** → tick **Unblock** → OK. This is the most common reason a copied
-download appears to do nothing at all.
+**A file copied over the network** may also be flagged. Right-click it →
+**Properties** → tick **Unblock** → **OK**. This is the most common reason a
+copied download appears to do nothing.
 
 ---
 
 ## Where things are kept
 
-An installed copy keeps each user's settings and results separate, the way any
-other program does.
+An installed copy keeps each user's settings and results separate. A portable
+copy keeps everything inside its own folder.
 
-| | Installed | Portable |
+| | Installed (Windows) | Portable (Windows) |
 | --- | --- | --- |
-| Program | `%LOCALAPPDATA%\Programs\MPN` | the folder you extracted |
-| Settings | `%LOCALAPPDATA%\MPN` | the same folder |
-| Results | `Documents\MPN` | the same folder |
-| Downloaded data | your choice, set on the Folders tab | the same folder |
+| Program | `%LOCALAPPDATA%\Programs\MPN` | the extracted folder |
+| Settings | `%LOCALAPPDATA%\MPN\mesh_config.json` | `mesh_config.json` in that folder |
+| Results | `Documents\MPN` | `results` in that folder |
+| Downloaded data | `%LOCALAPPDATA%\MPN\data`, or the folder set on the Folders tab | `data` in that folder |
+
+On Linux, settings and downloaded data default to `~/.local/share/MPN`, and on
+macOS to `~/Library/Application Support/MPN`. Results default to
+`~/Documents/MPN` on both.
 
 A portable copy is self-contained because it carries a file named
-`portable.marker`. Delete that file and it behaves as an installed copy.
+`portable.marker`. Deleting that file makes it behave as an installed copy.
 
-**The downloaded data is the large part** — roughly 44 GB for the PubMed
-archive and 8 GB for the database built from it. Set the data folder on the
-**Folders** tab before starting a download, and put it on a drive with room.
+**The downloaded data is the large part:** about 50 GB for the PubMed archive and
+10 GB for the database built from it. Set the data folder on the **Folders** tab
+before starting a download, on a drive with room.
 
 ---
 
 ## Updating
 
-Install the new version over the old one. The `.msi` replaces it in place, and
-your settings and results are kept. For a portable copy, extract the new zip and
-delete the old folder.
+**Installer:** install the new `.msi` over the old version. It replaces the
+program in place and keeps settings and results.
+
+**Portable zip:** extract the new zip to a new folder, move `mesh_config.json`,
+`data` and `results` across from the old folder, then delete the old folder.
+
+**Linux and macOS:** extract the new tarball. Settings, data and results live
+outside the program folder, so the new copy finds them; delete the old folder.
 
 ---
 
 ## Removing it
 
-**Installed:** Settings → Apps → MPN → Uninstall.
+**Installed (Windows):** Settings → Apps → MPN → Uninstall.
 
-By default this keeps the PubMed data you downloaded, since it is large and
-slow to fetch again, and always clears the temporary working copy the database
-build leaves in your Windows temp folder. To remove the downloaded data too:
+This keeps the downloaded PubMed data by default, because it is large and slow
+to fetch again, and always clears the temporary working copy that the database
+build leaves in the Windows temp folder. To remove the downloaded data as well:
 
 ```
 msiexec /x "MPN-3.2.10-win64.msi" REMOVEDATA=1
@@ -192,8 +218,8 @@ msiexec /x "MPN-3.2.10-win64.msi" REMOVEDATA=1
 
 **Windows portable zip:** run `Uninstall.bat`, then delete the folder.
 
-**Linux and macOS (the `.tar.gz` bundle)** — two steps, and the second one is
-just deleting a folder:
+**Linux and macOS:** run the uninstaller from the extracted folder, then delete
+the folder.
 
 ```
 cd MPN-3.2.10-linux-x86_64
@@ -203,36 +229,34 @@ cd MPN-3.2.10-linux-x86_64
 ./mpn-uninstall
 ```
 
-That removes what the program put **outside** its own folder: settings and
-downloaded data under `~/.local/share/MPN` (`~/Library/Application
-Support` on macOS), the applications-menu entry, and — if you ask it to — your
-results. It lists everything with sizes and asks before removing anything.
+The uninstaller removes what the program put **outside** its own folder:
+settings and downloaded data under `~/.local/share/MPN`
+(`~/Library/Application Support/MPN` on macOS), the applications-menu entry
+and, when requested, the results. It lists everything with sizes and asks before
+removing anything.
 
-Then delete the folder itself, which is the program:
+Then delete the folder, which is the program itself:
 
 ```
 rm -rf MPN-3.2.10-linux-x86_64
 ```
 
-**There is nothing to `pip uninstall`.** The bundle carries its own Python and
-puts the application on that interpreter's path; it never installs it. Earlier
-versions ended the uninstall by suggesting `python3.12 -m pip uninstall
-mpn`, which failed with *no such file or directory* because
-`python3.12` exists only inside the bundle — ignore that instruction if you meet
-it, and delete the folder instead.
+**A downloaded build has nothing to `pip uninstall`.** The bundle carries its own
+Python and puts the application on that interpreter's path without installing
+it.
 
-**Installed from source with pip:** `python -m pip uninstall mpn`,
-after running `mpn-uninstall` to clear the data. Use the same interpreter you
-installed it into.
+**Installed from source with pip:** run `mpn-uninstall` to clear the data, then
+`python -m pip uninstall mpn` with the same interpreter the package was
+installed into.
 
-Your results are never removed unless you explicitly ask.
+Results are never removed without an explicit request.
 
-To see exactly what is on disk before deciding, without changing anything:
+To list what is on disk before deciding, without changing anything:
 
 ```
 mpn-uninstall --list
 ```
 
-That lists every file the program downloaded, built or installed, with sizes —
-including the pieces that live outside the program folder and would otherwise
-be left behind.
+The list covers every file the program downloaded, built or installed, with
+sizes, including the files outside the program folder that would otherwise be
+left behind.

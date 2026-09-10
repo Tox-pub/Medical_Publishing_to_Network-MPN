@@ -3,14 +3,13 @@
 This document is how to run the pipeline from a shell, and how to work on the
 source. It ships with the source package.
 
-**Most people do not need it.** MPN is a desktop application, and
-everything the pipeline does can be driven from its window. If that is what you
-want, see [INSTALL.md](INSTALL.md) to install it and
-[HELP.md](HELP.md) for the manual — HELP.md is also what the application's
-**Help → MPN Manual** entry opens.
+**The desktop application does not require it.** MPN is a desktop
+application, and everything the pipeline does can be driven from its window. To
+install the application, see [INSTALL.md](INSTALL.md); for the manual, see
+[HELP.md](HELP.md), which is also what **Help → MPN Manual** opens.
 
-Use this document if you are scripting runs, working on the code, or running on
-a machine with no desktop.
+This document covers scripting runs, working on the code, and running on a
+machine with no desktop.
 
 **Every setting named here is the same setting the application shows.** The
 config keys below (`search_parameters.search_term`, `benchmark.primary_node`,
@@ -131,17 +130,17 @@ is needed. What follows is for working on the source.
 * **Python 3.11–3.13** (`requires-python = ">=3.11,<3.14"`).
 * **Memory** — 16 GB is the ideal minimum; 32 GB or more for the database
   build and for networks past one citation generation. It will run on less.
-* **Storage** — 100 GB+ free. The NLM baseline archives are about 50 GB and
-  the SQLite master database it builds is about 10 GB. Once that database is
-  built and verified you can delete `data/raw/pubmed_baseline/` and reclaim
-  the 50 GB, provided you do not intend to apply daily updates later — those
+* **Storage** — about 80 GB free. The NLM baseline archives are about 50 GB
+  and the SQLite master database built from them is about 10 GB. Once that
+  database is built and verified, `data/raw/pubmed_baseline/` can be deleted to
+  reclaim the archive space, unless daily updates will be applied later — those
   re-read the archives.
 
 ### Install from source
 
-This installs the **command-line pipeline** from source. To install the
-application instead, see [INSTALL.md](INSTALL.md); the application is described
-under [The MPN Window](HELP.md#the-mpn-window) below.
+This installs the pipeline and the application from source. To install a
+downloaded build instead, see [INSTALL.md](INSTALL.md); the application window is
+described under [The MPN Window](HELP.md#the-mpn-window).
 
 The commands assume **PowerShell** on Windows or **bash** on Linux and macOS.
 Adjust the paths and the activation command for another shell.
@@ -154,9 +153,10 @@ python -m venv ~/mesh_env
 ```
 
 On **Windows**, create the environment at a short path such as
-`C:\Users\<you>\mesh_env` — not inside a deeply nested or cloud-synced folder.
+`C:\Users\<name>\mesh_env` — not inside a deeply nested or cloud-synced folder.
 Several dependencies ship very long filenames that overflow the 260-character
-`MAX_PATH` limit and abort the install part-way through. See **Troubleshooting**.
+`MAX_PATH` limit and abort the install part-way through. See
+[Troubleshooting](HELP.md#troubleshooting).
 
 Verify the entry points resolve:
 
@@ -173,20 +173,32 @@ mpn-check-env
 
 The pipeline is entirely modular and controlled via a terminal interface. Configuration is handled by an interactive command-line wizard, allowing users to modify runtime parameters safely without touching source code.
 
-> **Invocation by platform.** The examples below use the `mpn-pipeline` command, which works on **macOS/Linux** (and on Windows after activating the venv). On **Windows**, if activation or the `.exe` launcher is blocked, use the equivalent module form with the venv's Python by full path — it behaves identically:
+> **Invocation by platform.** The examples below use the `mpn-pipeline` command, which works on **macOS/Linux** and on Windows after activating the virtual environment. On **Windows**, where activation or pip's `.exe` launcher is blocked, use the equivalent module form with the environment's Python by full path; it behaves identically:
 > ```powershell
 > & "$env:USERPROFILE\mesh_env\Scripts\python.exe" -m mesh_aop.cli --step all --interactive
 > ```
-> i.e. replace `mpn-pipeline` with `& "$env:USERPROFILE\mesh_env\Scripts\python.exe" -m mesh_aop.cli` in any command. Always run from the project root so it finds `mesh_config.json` and the `data/` folders.
+> i.e. replace `mpn-pipeline` with `& "$env:USERPROFILE\mesh_env\Scripts\python.exe" -m mesh_aop.cli` in any command.
+>
+> Settings are read from the per-user settings file (`%LOCALAPPDATA%\MPN\mesh_config.json` on Windows, `~/.local/share/MPN/mesh_config.json` on Linux, `~/Library/Application Support/MPN/mesh_config.json` on macOS) unless `--config` names another, so the working directory does not matter.
 
 ### CLI Flags
 
 | Flag | Description |
 |------|-------------|
-| `--step <name>` | Which pipeline segment to run (`all`, `process`, `data_ops`, `network`, `secondary`, `viz`, `benchmark`). Defaults to `all`. |
+| `--step <name>` | Which pipeline segment to run: `all`, `baseline`, `process`, `data_ops`, `network`, `secondary`, `viz` or `benchmark`. Defaults to `all`. |
 | `--interactive` | Launches the interactive wizard before execution. |
-| `--config <path>` | Path to a custom config JSON. Defaults to `mesh_config.json` in the current directory. |
-| `--readme` | Opens this documentation file in your default OS viewer. |
+| `--config <path>` | Path to a settings JSON. Defaults to the per-user settings file described above. |
+| `--sync-annotations <ask/yes/no>` | After a pause for annotation, whether to merge the run's strata into the master annotations library. Defaults to `ask`. |
+| `--refresh-mesh-support` | Re-downloads the MeSH descriptor file and rebuilds the stop-word vocabulary from it. |
+| `--build-database` | Runs Step 0 first: downloads the PubMed baseline and compiles the master annotation database. |
+| `--skip-baseline-download` | With `--build-database`, compiles from archives already on disk. |
+| `--with-updates` | With `--build-database`, also fetches the daily update files published since the baseline. |
+| `--rebuild-corrupt` | With `--build-database`, deletes an unreadable master database before rebuilding it. |
+| `--max-workers <N>` | Parser processes for the database build. Defaults to a value chosen from available RAM. |
+| `--check-files` | Checks every file the project depends on, reports anything damaged, and exits. |
+| `--repair-files` | With `--check-files`, deletes the damaged files so the next run rebuilds them. |
+| `--deep-check` | With `--check-files`, runs SQLite's full integrity check. Thorough, and slow on a large database. |
+| `--readme` | Opens `README.md` in the system's default viewer. |
 | `-v` / `--version` | Prints the installed package version and exits. |
 
 ### Running the Complete Pipeline
@@ -202,6 +214,7 @@ mpn-pipeline --step all --interactive
 
 If upstream dependencies are already built, specific modules can be executed in isolation.
 
+* **Step 0 only:** `mpn-pipeline --step baseline --build-database` (Master database download and compilation)
 * **Step 0 & 1:** `mpn-pipeline --step process --interactive` (Database Compilation & MeSH processing)
 * **Step 2:** `mpn-pipeline --step data_ops --interactive` (Entrez API Collection)
 * **Step 3:** `mpn-pipeline --step network --interactive` (Topology & Filtering)
@@ -222,10 +235,10 @@ Medical_Publishing_to_Network-MPN/
 │   ├── raw/                            # Inputs for a run
 │   │   ├── aop_annotations_master.csv  # Ships w/ repo: AOP strata dictionary (pre-seeded; grows each run)
 │   │   ├── desc2025.xml                # Auto-downloaded from NLM if missing (or place manually); not in repo
-│   │   ├── ground_truth_pmids.template.csv # Ships w/ repo: copy+fill for your own benchmark set
-│   │   ├── ground_truth_pmids.csv      # Optional, you place this: YOUR benchmark set (see "Ground Truth")
+│   │   ├── ground_truth_pmids.template.csv # Ships w/ repo: copy and fill for a project's benchmark set
+│   │   ├── ground_truth_pmids.csv      # Optional, placed by hand: a project's benchmark set (see "Ground Truth")
 │   │   ├── master_mesh_database.db     # Auto-generated: offline PubMed corpus (Step 0)
-│   │   ├── pubmed_baseline/            # Auto-downloaded: NLM Baseline XMLs (~40GB, Step 0)
+│   │   ├── pubmed_baseline/            # Auto-downloaded: NLM Baseline XMLs (~50 GB, Step 0)
 │   │   └── pubmed_updates/             # Auto-downloaded: NLM Daily Update XMLs (optional)
 │   ├── processed/                      # Auto-generated: pipeline databases and JSONs (starts empty)
 │   ├── reference_raw/                  # Ships w/ repo: bundled reference inputs
@@ -234,14 +247,18 @@ Medical_Publishing_to_Network-MPN/
 │
 ├── results/                            # Output artifacts (auto-generated)
 │   ├── figures/                        # High-resolution pipeline plots (.png, .tif, .html)
-│   ├── benchmark/                      # All --step benchmark outputs (ranking + ground-truth)
-│   │   └── validation/                 # Node-weighting + projection report
+│   ├── benchmark/                      # All --step benchmark outputs
+│   │   ├── inputs/                     # The ground truth the run used
+│   │   ├── ranking/                    # Article-ranking benchmark
+│   │   ├── ranking_validation/         # Node-weighting and projection comparison
+│   │   └── network_validation/         # Node/edge convergent validation
 │   ├── logs/                           # System logs and failed fetch records
 │   ├── *_run_annotations.csv           # Run-specific strata annotation templates
 │   ├── *_Top_Network_Articles.csv      # Secondary analysis exports
 │   └── *_export.xlsx                   # Exported full network tables
 │
 ├── src/
+│   ├── mpn/                            # The desktop application: window, settings form, runner
 │   ├── mesh_aop/                       # Core Python package modules
 │   │   ├── __init__.py
 │   │   ├── baseline_manager.py         # Multi-core MapReduce ETL for the Master Database
@@ -267,11 +284,18 @@ Medical_Publishing_to_Network-MPN/
 │   └── mesh_aop_notebooks/             # Jupyter notebook equivalents of each module
 │       └── *.ipynb                     # One notebook per module for interactive exploration
 │
+├── packaging/                          # Release build scripts, launchers and the WiX source
+├── tests/                              # Test suites (python tests/run_all.py)
+│
 ├── environment.yml                     # Mamba/Conda cross-platform dependency resolution
-├── pyproject.toml                      # Modern Python package specification
-├── mesh_config.json                    # Runtime user config (auto-generated; git-ignored, not in repo)
+├── pyproject.toml                      # Package specification and entry points
+├── CITATION.cff                        # Machine-readable citation
 ├── LICENSE                             # MIT License
-└── README.md                           # This document
+├── THIRD-PARTY-NOTICES.md              # Licences of the bundled components
+├── README.md                           # Project overview
+├── INSTALL.md                          # Installing downloaded builds
+├── HELP.md                             # The manual
+└── COMMAND-LINE.md                     # This document
 
 
 ```
@@ -280,13 +304,13 @@ Medical_Publishing_to_Network-MPN/
 
 ## Jupyter Notebook Interface
 
-Every module in `src/mesh_aop/` has a corresponding Jupyter notebook in `src/mesh_aop_notebooks/`. These notebooks mirror the source modules cell-by-cell and are intended for:
+Every module in `src/mesh_aop/` has a corresponding Jupyter notebook in `src/mesh_aop_notebooks/`. Each notebook holds its module's source in a single code cell, regenerated from the module by `packaging/sync_notebooks.py`. They are intended for:
 
 * **Interactive exploration** — step through the pipeline one cell at a time and inspect intermediate data structures.
 * **Prototyping** — experiment with individual functions (e.g., tweak GLF parameters and re-run only the filtering step) without triggering the full CLI orchestration.
 * **Debugging** — isolate a specific module and inspect its inputs and outputs in a notebook environment.
 
-Each notebook contains its own `mesh_config.json` and `environment.yml` references so it can be run independently from the `src/mesh_aop_notebooks/` directory if needed.
+The folder carries its own `environment.yml` and `pyproject.toml`, so it can be used on its own.
 
 ---
 
@@ -307,7 +331,7 @@ from mesh_aop import (
     plot_sankey_alluvial,
 )
 
-# Load config (merges factory defaults with your local mesh_config.json)
+# Load settings (factory defaults overlaid by the local mesh_config.json)
 config = MeshConfig(config_path="mesh_config.json")
 
 # Step 1 – Extract MeSH terms from XML
@@ -340,8 +364,6 @@ The full list of exported symbols is defined in `src/mesh_aop/__init__.py`.
 
 ---
 
----
-
 ## Where to find everything else
 
 This document covers only how to drive the pipeline from a shell. Everything
@@ -350,11 +372,11 @@ about what the pipeline does, and what each setting means, is in
 
 | Looking for | See |
 | :--- | :--- |
-| What every setting does | **Configuration Wizard Parameter Glossary** |
-| How ARS and MRS are calculated | **How articles and terms are scored** |
-| Prerequisites and disk budget | **Data Acquisition & Prerequisites** |
-| Assigning strata | **The Annotation Workflow (Strata)** |
-| What the run produces | **Output Artifacts** |
-| Ground truth and benchmarking | **Ground Truth**, **Validation & Benchmarking** |
-| Damaged files | **When Files Go Wrong** |
-| Citing this program | **Citation** |
+| What every setting does | [Settings Reference](HELP.md#settings-reference) |
+| How ARS and MRS are calculated | [How articles and terms are scored](HELP.md#how-articles-and-terms-are-scored) |
+| Prerequisites and disk budget | [Data Acquisition & Prerequisites](HELP.md#data-acquisition--prerequisites) |
+| Assigning strata | [The Annotation Workflow (Strata)](HELP.md#the-annotation-workflow-strata) |
+| What the run produces | [Output Artifacts](HELP.md#output-artifacts) |
+| Ground truth and benchmarking | [Ground Truth](HELP.md#ground-truth), [Validation & Benchmarking](HELP.md#validation--benchmarking) |
+| Damaged files | [When Files Go Wrong](HELP.md#when-files-go-wrong) |
+| Citing this program | [Citation](HELP.md#citation) |

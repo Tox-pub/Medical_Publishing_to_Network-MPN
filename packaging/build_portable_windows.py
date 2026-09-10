@@ -262,15 +262,14 @@ if __name__ == '__main__':
     main(repo, PY if os.path.exists(PY) else sys.executable)
 '''
 
-# The three .bat launchers are not built here any more - they live as real
-# files in packaging/launchers/ so they can be read and reviewed in the
-# repository, and are copied verbatim by main().
+# The .bat launchers live as real files in packaging/launchers/, so they can be
+# read and reviewed in the repository, and main() copies them verbatim.
 
 MARKER_TEXT = """This file marks the folder as a portable copy.
 
-Settings, data and results are kept here rather than under your user profile.
-Delete it and this copy behaves as an installed one: settings and results move
-to your own profile, and each user of the machine gets their own.
+Settings, data and results are kept in this folder rather than in the user
+profile. Delete this file and the copy behaves as an installed one: settings and
+results move to the user profile, and each user of the machine gets their own.
 """
 
 README = r"""MPN {ver}
@@ -281,7 +280,7 @@ WHAT THIS IS
     concept networks from PubMed literature.
 
 INSTALLING
-    There is no installer. Extract this folder anywhere you can write to -
+    No installation is needed. Extract this folder to any writable location -
     Documents, the Desktop, or a USB drive - then open it and double-click
 
         MPN.bat
@@ -290,19 +289,19 @@ INSTALLING
 
     Windows may take a few seconds to scan the files the first time.
 
-    For a Desktop icon, run "Create desktop shortcut.bat" once. It points at
-    this folder rather than copying anything, so keep the folder where it is.
+    For a Desktop icon, run "Create desktop shortcut.bat" once. The shortcut
+    points at this folder rather than copying it, so leave the folder in place.
 
-    To install it properly instead - Start menu entry, desktop icon, and an
-    entry in Settings > Apps - run "Install.bat". That copies the program into
-    your user profile and gives each account its own settings and results.
-    Nothing needs administrator rights.
+    For a full installation - Start menu entry, desktop icon, and an entry in
+    Settings > Apps - run "Install.bat". It copies the program into the user
+    profile and gives each account its own settings and results. No
+    administrator rights are needed.
 
 UNINSTALLING
     Run "Uninstall.bat", or open the program and choose Tools -> Uninstall.
 
-    Either one lists what is on disk, with sizes, and lets you pick what goes.
-    Your results are kept unless you say otherwise.
+    Both list what is on disk, with sizes, and ask what to remove. Results are
+    kept unless their removal is requested.
 
     Do not simply delete this folder. Building the database leaves a working
     copy - the same size as the database, several gigabytes - in the Windows
@@ -313,33 +312,39 @@ IF THE WINDOW DOES NOT APPEAR
     Run "MPN (Troubleshooting).bat" instead. It does the same thing
     but keeps a terminal open, so any error message stays on screen.
 
-BEFORE YOU CAN ANALYSE ANYTHING
+BEFORE ANY ANALYSIS
     The pipeline works from a local copy of PubMed's annotation data. Nothing
     else runs until that database exists.
 
     The application opens on Data Setup, which lists what is on disk. Next to
-    "Master annotation database" is a Build button; it downloads the PubMed
-    baseline and compiles the database for you.
+    "Master annotation database" is a Build button, which downloads the PubMed
+    baseline and compiles the database.
 
-    Expect roughly 44 GB downloaded once and a database of about 8 GB built from
-    it, over several hours. The download resumes if interrupted, and the 44 GB
+    Expect about 50 GB downloaded once and a database of about 10 GB built from
+    it, over several hours. The download resumes if interrupted, and the 50 GB
     archive can be deleted afterwards from the same screen.
 
-    Set an output folder on the Folders tab before running a step if you do not
-    want results written into the project's own results folder.
+    Results are written to the results folder inside this folder unless a
+    different output folder is set on the Folders tab.
+
+TO CHECK IT WORKS WITHOUT DOWNLOADING ANYTHING
+    Tick "Use bundled reference data" on the Search tab of Settings, then run
+    Step 4 - Figures. The reference corpus ships in this folder, so every
+    figure and the PRISMA report are drawn from data already on disk.
 
 REQUIREMENTS
     Windows 10 or 11, 64-bit.
     About 500 MB for this folder, plus room for the data described above.
 
 WHAT IS IN HERE
-    MPN.bat      the launcher - this is the one to click
-    Install.bat             installs it properly, if you would rather
-    Create desktop shortcut.bat   puts an icon on your Desktop
-    mpn-pipeline.bat       the same pipeline without the window, for a shell
-    Uninstall.bat           removes the program and its data
-    python\                 Python {py}, the official build from python.org
-    app\                    the application and the analysis pipeline
+    MPN.bat                       the launcher - this is the one to click
+    MPN (Troubleshooting).bat     the same, with a console kept open
+    Install.bat                   installs the program into the user profile
+    Create desktop shortcut.bat   puts an icon on the Desktop
+    mpn-pipeline.bat              the pipeline without the window, for a shell
+    Uninstall.bat                 removes the program and its data
+    python\                       Python {py}, the official build from python.org
+    app\                          the application and the analysis pipeline
 
     The only program that runs is python.exe, which is signed by the Python
     Software Foundation.

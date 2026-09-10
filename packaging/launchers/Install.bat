@@ -21,7 +21,7 @@ REM ---------------------------------------------------------------------------
 setlocal EnableExtensions
 
 set "APPNAME=MPN"
-set "APPVER=3.1.0"
+set "APPVER=3.2.10"
 set "SRC=%~dp0"
 set "TARGET="
 set "SILENT="
@@ -47,8 +47,8 @@ echo.
 echo   From : %SRC%
 echo   To   : %TARGET%
 echo.
-echo   Installs for you only. No administrator rights are needed and nothing
-echo   outside the folder above is modified, apart from your Start menu.
+echo   Installs for the current user only. No administrator rights are needed,
+echo   and nothing outside the folder above is modified apart from the Start menu.
 echo.
 
 if not exist "%SRC%python\python.exe" goto not_extracted
@@ -186,7 +186,7 @@ exit /b 0
 REM ---------------------------------------------------------------------------
 :not_extracted
 echo   [X] This does not look like the extracted program folder.
-echo       Run Install.bat from inside the folder you extracted.
+echo       Run Install.bat from inside the extracted folder.
 echo.
 if not defined SILENT pause
 exit /b 1

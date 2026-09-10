@@ -1,7 +1,7 @@
 # Build one self-contained package per operating system, and prove each one
 # runs on the system it targets.
 #
-#   MPN-<version>-windows.msi          double-click
+#   MPN-<version>-win64.msi            double-click
 #   MPN-<version>-linux-x86_64.tar.gz  extract, ./"MPN"
 #   MPN-<version>-macos-arm64.tar.gz   extract, ./"MPN"
 #
@@ -23,9 +23,8 @@ name: Release
 # own systems, and leaves the results attached to the run for whoever wants to
 # download and try them. Creating a public Release is a separate, deliberate
 # act: run this workflow by hand from the Actions tab and set `publish` to
-# true. Tagging used to publish, which released 3.2.0 without anyone deciding
-# to - the build and the announcement are not the same thing and no longer
-# share a trigger.
+# true. Building and announcing are separate decisions, so they do not share a
+# trigger.
 on:
   push:
     tags: ['v*']
@@ -130,7 +129,7 @@ jobs:
         run: |
           set -eu
           ver=$(grep -m1 '^version' pyproject.toml | cut -d'"' -f2)
-          msi="MPN-${ver}-windows.msi"
+          msi="MPN-${ver}-win64.msi"
           mv build/*.msi "$msi"
           echo "VER=$ver" >> "$GITHUB_ENV"
           mb=$(du -m "$msi" | cut -f1)
@@ -149,13 +148,13 @@ jobs:
       - name: Inspect the Windows build
         run: |
           python packaging/verify_windows_bundle.py build/MPN
-          python packaging/verify_windows_bundle.py "MPN-${{ env.VER }}-windows.msi"
+          python packaging/verify_windows_bundle.py "MPN-${{ env.VER }}-win64.msi"
         continue-on-error: false
 
       - uses: actions/upload-artifact@v5
         with:
           name: windows
-          path: 'MPN-*-windows.msi'
+          path: 'MPN-*-win64.msi'
           if-no-files-found: error
 
   unix:
@@ -275,18 +274,18 @@ jobs:
           files: dist/*
           generate_release_notes: true
           body: |
-            Download the one file for your system. Each carries its own Python -
-            nothing needs installing first.
+            Download the one file for the system in use. Each carries its own
+            Python - nothing needs installing first.
 
             | System | File |
             | :--- | :--- |
-            | Windows | `...-windows.msi` - double-click |
+            | Windows | `...-win64.msi` - double-click |
             | Linux | `...-linux-x86_64.tar.gz` - extract, then `./"MPN"` |
             | macOS (Apple silicon) | `...-macos-arm64.tar.gz` - extract, then `./"MPN"` |
 
-            **macOS users:** the download is unsigned, so macOS quarantines it.
-            The launcher clears that itself on first run - no password, no Apple
+            **macOS:** the download is unsigned, so macOS quarantines it. The
+            launcher clears that itself on first run - no password, no Apple
             account, nothing to pay. Open Terminal, `cd` to the extracted folder
-            and run `./"MPN"`. If you would rather do it by hand:
+            and run `./"MPN"`. To clear it by hand instead:
 
                 xattr -dr com.apple.quarantine "/path/to/the/folder"

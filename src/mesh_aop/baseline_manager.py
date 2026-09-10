@@ -284,7 +284,7 @@ class PubMedBaselineManager:
             # if it is in RAM. This only overrides the default.
             fallback = self.raw_data_dir.parent / 'etl_workspace'
             print(f"  [i] {_ws_base} is RAM-backed (tmpfs). The build needs about "
-                  f"8 GB of\n      scratch space, so it will use {fallback} instead.")
+                  f"10 GB of\n      scratch space, so it will use {fallback} instead.")
             print( "      Set a workspace folder in Settings to choose somewhere else.")
             _ws_base = fallback
         self.local_workspace = _ws_base / "mesh_etl_workspace"
@@ -597,7 +597,7 @@ class PubMedBaselineManager:
             print("      keep on this device') and re-run.")
 
         # Record what a good build looks like. Nothing else can tell later
-        # whether an 8 GB file has been altered since - a sync client serving a
+        # whether a 10 GB file has been altered since - a sync client serving a
         # dehydrated copy, an interrupted move, a backup tool writing it back -
         # and re-scanning it on every run to find out would cost minutes each
         # time. Size, mtime and row count are checked in seconds instead.

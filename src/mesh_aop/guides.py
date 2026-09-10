@@ -46,103 +46,100 @@ def annotation_guide_markdown(annotation_path, strata_order=''):
     listed = '\n'.join(f'{i}. {name}' for i, name in enumerate(order, 1))
     is_default = order == list(DEFAULT_ORDER)
     example = '' if not is_default else (
-        '\nThese seven are the default because this program began as a tool '
-        'for adverse outcome pathways, and they are the levels of one: a '
-        'stressor acts at the molecular level, which propagates through cell, '
-        'tissue and organ to an adverse outcome. They are an example, not a '
-        'requirement. Replace them with organ systems, exposure routes, study '
-        'designs, or whatever your question actually groups terms by.\n')
+        '\nThese seven are the default because MPN was built for adverse '
+        'outcome pathways, and they are the levels of one: a stressor acts at '
+        'the molecular level, which propagates through cell, tissue and organ '
+        'to an adverse outcome. They are an example, not a requirement. Replace '
+        'them with organ systems, exposure routes, study designs, or whatever '
+        'grouping the research question uses.\n')
 
     return f"""\
-# The run is paused, waiting for you
+# The run is paused for annotation
 
 Nothing has gone wrong. The pipeline built and scored the network, then stopped
-on purpose, because the next step needs a judgement it cannot make.
+on purpose: the next step needs a judgement the program cannot make.
 
-## What it needs
+## What is needed
 
-Every MeSH term in the final network has to be assigned to a **stratum** — a
-group you have chosen to divide the network into. Which groups those are, and
-which term belongs in which, is yours to decide. The program does not check
-your scheme against anything and has no opinion about it.
+Every MeSH term in the final network is assigned to a **stratum**: one of the
+groups chosen to divide the network. Which groups to use, and which term belongs
+in which, is a decision for the annotator. The program does not check the scheme
+against anything.
 
 ## The file to edit
 
 `{annotation_path}`
 
-One row per MeSH term. Fill in the `{COLUMN}` column. It is a
-semicolon-delimited CSV, so open it in Excel, LibreOffice, or a text editor.
+One row per MeSH term. Fill in the `{COLUMN}` column. The file is a
+semicolon-delimited CSV; open it in Excel, LibreOffice or a text editor.
 
-**Keep the semicolons.** MeSH headings contain commas as a matter of course —
-"Dermatitis, Allergic Contact" — which is why this file does not use them as
-separators. If your spreadsheet offers to save as "CSV (comma delimited)", say
-no and keep the format it came in.
+**Keep the semicolons.** MeSH headings contain commas as a matter of course
+("Dermatitis, Allergic Contact"), which is why this file does not use commas as
+separators. When a spreadsheet offers to save as "CSV (comma delimited)",
+decline and keep the original format.
 
 ## The strata this project expects
 
 {listed}
 {example}
-Any name you type is valid. A stratum that is not in the list above still
-appears in the figures; it is added at the end, because a name you typed is a
-name you meant. Spelling and capitalisation are taken literally, so `Molecular`
-and `molecular` are two different strata — which is usually a typo rather than
-an intention.
+Any name entered is valid. A stratum missing from the list above still appears
+in the figures, added at the end of the order. Spelling and capitalisation are
+taken literally, so `Molecular` and `molecular` are two different strata, which
+is usually a typo.
 
-To fix the order the figures use, set **Strata order** in Settings. That
-setting is only about order: it never restricts what you may write here.
+To change the order the figures use, set **Strata order** in Settings. That
+setting controls order only; it never restricts what may be entered here.
 
-### Terms you do not place
+### Terms without a stratum
 
-Two words appear in this column for a term that has no stratum, and they do not
-mean the same thing:
+Two values mark a term with no stratum, and they mean different things:
 
-| Value | What it means |
+| Value | Meaning |
 | :--- | :--- |
-| `{PLACEHOLDER}` | Nobody has looked at this term yet. Every row starts here. |
-| `{UNASSIGNED}` | You looked, and it belongs to none of your groups. |
+| `{PLACEHOLDER}` | Not yet reviewed. Every row starts here. |
+| `{UNASSIGNED}` | Reviewed, and belongs to none of the groups. |
 
-The difference is for you, not for the program: it is how you tell a term you
-have finished with from one you have not reached. Keeping them apart is the
-only way to work through a long file across several sittings.
+The distinction serves the annotator, not the program. It separates terms
+already decided from terms not yet reached, which makes it practical to work
+through a long file over several sittings.
 
-**The figures treat them as one.** Both stay in the network and in every
-topological figure, and both are left out of the figures that show the strata.
-So a file you never finished draws the same picture as one where you decided
-those terms did not belong — check the count in the log before reading too much
-into a sparse figure.
+**The figures treat both as one.** Both stay in the network and in every
+topological figure, and both are left out of the figures that show strata. An
+unfinished file therefore draws the same picture as a finished one in which
+those terms were judged not to belong. Check the counts in the run log before
+drawing conclusions from a sparse figure.
 
-## Before you start, if you have annotated another project
+## Before starting, if another project has been annotated
 
-Your master annotations library remembers the stratum you gave every MeSH term,
-so the same term never has to be annotated twice. That is a saving when two
-projects share a scheme and **a trap when they do not**: a term you called
-`Molecular` in an AOP project arrives pre-filled as `Molecular` in a project
-organised by organ system.
+The master annotations library remembers the stratum given to every MeSH term,
+so no term is annotated twice. That saves work when two projects share a scheme
+and **misleads when they do not**: a term labelled `Molecular` in an AOP project
+arrives pre-filled as `Molecular` in a project organised by organ system.
 
-The library is shared by every project and merging into it is permanent. So if
-this project uses a different scheme from your last one, read the file through
-by hand before you run the figures, rather than trusting what is already in the
-column.
+The library is shared by every project and merging into it is permanent. When
+this project uses a different scheme from the previous one, read the file
+through by hand before running the figures, rather than trusting what is already
+in the column.
 
-## When you are done
+## When finished
 
 Save the file, then run the figures step:
 
-| Where | What to do |
+| Where | Action |
 | :--- | :--- |
 | In MPN | Run → Step 4 — Figures |
 | In a terminal | `python -m mesh_aop.cli --step viz` |
 
 Nothing before that step is recomputed, so this is quick. Edit the file and
-re-run the figures as often as you like.
+re-run the figures as often as needed.
 
-## If you would rather not annotate at all
+## To skip annotation
 
 Turn off **Pause for strata annotation** on the Search tab of Settings. The run
 then completes unattended with every term left `{UNASSIGNED}`. The network, the
-scores, the benchmark and the topological figures are all still valid — only
-the figures that show the strata lose their meaning, because there is no
-grouping left in them to show.
+scores, the benchmark and the topological figures all remain valid; only the
+figures that show strata lose their meaning, because no grouping is left in
+them to show.
 
 ---
 
@@ -163,22 +160,22 @@ MPN - what this file is, and how to rebuild it
 
 WHAT IT IS
     A local copy of PubMed's MeSH annotations: for every article, its publication
-    date and its subject headings. Everything else in this program reads it. It
-    is built once and then reused by every run.
+    date and its subject headings. Every other step reads it. It is built once
+    and reused by every run.
 
-WHY YOU SHOULD NOT DELETE IT CASUALLY
-    Building it means downloading roughly 50 GB from the NLM and compiling it
-    into a database of about 8 GB. That takes several hours and, on a slow
-    connection, most of a day. It is by far the longest thing this program does.
+DO NOT DELETE IT WITHOUT CAUSE
+    Building it downloads about 50 GB from the NLM and compiles it into a
+    database of about 10 GB. That takes several hours and, on a slow connection,
+    most of a day. It is by far the longest operation in the program.
 
-    The 50 GB of downloaded archives, on the other hand, ARE safe to delete once
-    the database exists. The Data Setup screen has a button for exactly that.
+    The downloaded archives, by contrast, ARE safe to delete once the database
+    exists. The Data Setup screen has a button for that.
 
 HOW TO REBUILD IT
     In MPN:
         Database -> Data setup, then press Build next to "Master annotation
-        database". If a damaged database is already there, tick the option to
-        delete it first.
+        database". If a damaged database is present, tick the option to delete
+        it first.
 
     In a terminal:
         python -m mesh_aop.cli --step baseline --build-database
@@ -188,15 +185,14 @@ HOW TO REBUILD IT
         and --rebuild-corrupt to delete an unreadable database before starting.
 
 IF IT WILL NOT OPEN
-    A database interrupted mid-build - a power cut, a full disk, a machine that
-    slept - can be left unreadable. The program checks it before every run and
-    will tell you plainly if it is damaged rather than failing halfway through
-    a long step.
+    A build interrupted by a power cut, a full disk or a machine that hibernated
+    can leave the database unreadable. The program checks it before every run
+    and reports damage plainly instead of failing halfway through a long step.
 
-    Run Tools -> Check and repair files in MPN. It reports what is
-    damaged, offers to remove it, and tells you which step to resume from. Only
-    the master database has to be rebuilt from scratch; everything else is
-    derived and can be regenerated in minutes.
+    Run Tools -> Check and repair files in MPN. It reports what is damaged,
+    offers to remove it, and names the step to resume from. Only the master
+    database has to be rebuilt from scratch; everything else is derived and
+    regenerates in minutes.
 
     A full disk is the usual cause. The build needs room for the archives, the
     database, and a working copy of the database at the same time. If this drive
@@ -207,9 +203,9 @@ WHAT ELSE LIVES HERE
     {where}
 
     Downloaded PubMed archives, the per-project PMID databases, and this file.
-    Everything here can be rebuilt; nothing here is your own work. Your results
-    are kept somewhere else entirely, so clearing this folder never destroys an
-    analysis - only the time it would take to download it all again.
+    Everything here can be rebuilt; none of it is analysis output. Results are
+    stored elsewhere, so clearing this folder never destroys an analysis, only
+    the time needed to download it all again.
 
 ================================================================================
 Written automatically by MPN. Safe to delete; it will come back.

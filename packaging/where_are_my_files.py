@@ -103,7 +103,7 @@ def main():
         print(f'\nFiles under {len(other)} other prefix(es) are also on disk: '
               f'{", ".join(sorted(other))}.')
         print('They belong to earlier runs and are never read by this one. '
-              'Delete them\nfrom the Database screen if you no longer want them.')
+              'Delete them\nfrom the Database screen when they are not needed.')
     return 0
 
 
