@@ -201,6 +201,10 @@ ck(not called, 'an empty set never even asks')
 ck(sorted(os.listdir(db_dir)) == before, 'and removes nothing')
 
 print('\n=== the rows are in the order the work happens ===')
+# Section 7 replaced scan_data with a stub so a delete could not redraw the
+# table underneath it. These two checks are about the redraw, so the real one
+# has to come back first - calling the stub passed whatever was on screen.
+app.scan_data = type(app).scan_data.__get__(app)
 app.show('setup')
 app.update()
 titles = []

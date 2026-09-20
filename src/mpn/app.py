@@ -2496,6 +2496,16 @@ class Workbench(tk.Tk):
                 'To use the reference corpus, run the figures or the benchmark '
                 'instead: the network they need is already here.')
             return
+        # Before anything starts, and all of it at once. The pipeline checks the
+        # same rules on its way in, but a user who has just pressed Run should
+        # not have to read a console to find out that a field is wrong.
+        settings_problems = self._field_problems(step)
+        if settings_problems:
+            messagebox.showerror(
+                'These settings cannot be used',
+                'Nothing has started.\n\n' + '\n'.join(settings_problems)
+                + '\n\nCorrect them and press Run again.')
+            return
         if not self._confirm_overwrite(step):
             return
         extra = list(extra or [])
@@ -2553,6 +2563,21 @@ class Workbench(tk.Tk):
         self._paused_annotation = None
         self.runner.start(step, extra)
         self._pump()
+
+    def _field_problems(self, step):
+        """Settings this run cannot use, as finished lines, or nothing.
+
+        The rules live with the pipeline, so the window and the command line
+        cannot disagree about what a field may contain. A check that cannot run
+        never blocks a run: being unable to validate is not the same as having
+        found something wrong.
+        """
+        try:
+            from mesh_aop import field_rules
+            from mesh_aop.config_parser import MeshConfig
+            return field_rules.problems(MeshConfig(config_path=self.cfg_path), step)
+        except Exception:                                          # noqa: BLE001
+            return []
 
     def _confirm_overwrite(self, step):
         """Warn before replacing results this prefix already has.

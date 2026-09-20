@@ -114,9 +114,23 @@ def parse_terms(value):
         items = [part.strip() for part in str(value).split(';')]
     out = []
     for term in items:
+        term = _unquote(term)
         if term and term not in out:
             out.append(term)
     return tuple(out)
+
+
+def _unquote(text):
+    """An entry with its surrounding quotes removed, if it has a pair of them.
+
+    Quotes read as natural punctuation for a list of names, and an entry kept
+    with its quotes matches no MeSH heading - so it is dropped silently, which
+    is the worst way for a setting to fail.
+    """
+    text = text.strip()
+    if len(text) >= 2 and text[0] == text[-1] and text[0] in '"\'':
+        return text[1:-1].strip()
+    return text
 
 
 def _read_terms_csv(path):

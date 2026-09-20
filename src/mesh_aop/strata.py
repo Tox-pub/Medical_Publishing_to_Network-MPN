@@ -81,6 +81,11 @@ def parse_order(text):
     raw = text.split(';') if ';' in text else text.split(',')
     out = []
     for name in (s.strip() for s in raw):
+        # Quotes around an entry are accepted and dropped: a stratum kept with
+        # its quotes is a different name from the one written in the
+        # annotation file, and would be plotted as its own group.
+        if len(name) >= 2 and name[0] == name[-1] and name[0] in '"\'':
+            name = name[1:-1].strip()
         if name and name not in out:
             out.append(name)
     return out

@@ -216,9 +216,14 @@ print('\n=== 5. the prefix is demanded only where a file is named after it ===')
 # install was refused at the first button it offered.
 import subprocess                                                   # noqa: E402
 
+sys.path.insert(0, 'src')
+from mesh_aop import field_rules                                    # noqa: E402
+
 cli_src = open('src/mesh_aop/cli.py', encoding='utf-8').read()
-ck("args.step not in ('baseline', 'process')" in cli_src,
-   'the check names the steps it does not apply to')
+ck('field_rules.problems(config, args.step)' in cli_src,
+   'the pipeline checks every field before the first step')
+ck(field_rules.SHARED_STEPS == ('baseline', 'process'),
+   f'and the steps needing no project name are named once: {field_rules.SHARED_STEPS}')
 
 box = tempfile.mkdtemp()
 cfg_path = os.path.join(box, 'mesh_config.json')
@@ -241,9 +246,11 @@ for step in ('baseline', 'process'):
        f'--step {step} runs with no prefix set',
        (r.stdout + r.stderr)[-200:])
 r = _run('network')
-ck(r.returncode != 0 and 'No project prefix is set' in (r.stdout + r.stderr),
+ck(r.returncode != 0 and 'Project prefix:' in (r.stdout + r.stderr),
    'a step that writes project files still refuses without one',
    (r.stdout + r.stderr)[-200:])
+ck('Nothing has run' in (r.stdout + r.stderr),
+   'and says that nothing started', (r.stdout + r.stderr)[-200:])
 
 print()
 if FAILS:

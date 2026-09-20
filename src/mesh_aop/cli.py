@@ -44,6 +44,7 @@ from .network import run_network_construction, run_consensus_filtering_and_lcc, 
 from .run_ledger import open_ledger
 from .prisma import write_prisma_report
 from .guides import write_annotation_guide, write_master_db_guide
+from . import field_rules
 from . import guides
 from . import strata
 from . import ledger_collect
@@ -860,27 +861,27 @@ def main():
         config.params['_run_baseline_updates'] = args.with_updates
         config.params['_delete_corrupt_db'] = args.rebuild_corrupt
 
-    # A project needs a name before it writes anything NAMED FOR A PROJECT. The
-    # prefix ships empty so a fresh install does not inherit this project's
-    # name, which means it has to be checked - without one, every file would be
-    # called _pmids.db, _final_network_with_relevance.json and so on, and two
-    # projects would collide on the first run.
+    # Everything that can be checked without the databases, checked before the
+    # first step runs and reported all at once. A mistyped field costs a second
+    # here; the same mistake found by the step that reads it costs the hours
+    # spent reaching that step.
     #
-    # Step 0 and Step 1 are the exception, and the check has to say so. They
-    # build what every project shares - the PubMed archive, the master
+    # Step 0 and Step 1 are exempt from the project name, and field_rules says
+    # so: they build what every project shares - the PubMed archive, the master
     # annotation database, the MeSH vocabulary - and name none of it for a
-    # project. Demanding a prefix there blocks the first thing a new install
-    # does, to protect filenames that step never writes.
-    if args.step not in ('baseline', 'process') and not str(config.prefix or '').strip():
+    # project.
+    settings_problems = field_rules.problems(config, args.step)
+    if settings_problems:
         print("\n" + "<" * 30 + ">" * 30)
-        print("[CRITICAL ERROR] No project prefix is set")
+        print("[CRITICAL ERROR] These settings cannot be used")
         print("<" * 30 + ">" * 30)
-        print("  Every file a run produces is named with it, so it is what keeps")
-        print("  one analysis apart from another.")
-        print("\n  Set 'Project prefix' on the Search tab - a short name for the")
-        print("  question you are asking, such as SkinSens or ACD_2026. Letters,")
-        print("  digits and underscores.")
-        print("\n  Or tick 'Use bundled reference data', which supplies its own.")
+        for line in settings_problems:
+            print(f"  {line}")
+        if any(line.startswith('Project prefix') for line in settings_problems):
+            print("\n  The project prefix names every file a run produces, which is")
+            print("  what keeps one analysis apart from another. Set it on the")
+            print("  Search tab, or tick 'Use bundled reference data'.")
+        print("\n  Nothing has run. Correct these and start again.")
         sys.exit(1)
 
     # What the reference corpus replaced, said out loud. A silent override is

@@ -15,6 +15,7 @@ article tables and the full network as Excel/CSV files.
 
 import os
 import json
+import re
 import sqlite3
 import time
 import numpy as np
@@ -589,15 +590,18 @@ _GRAPH_READERS = {
 
 
 def _parse_network_list(raw: str) -> list:
-    """Split the wizard's comma-separated, quote-wrapped network list into names.
+    """Split a quote-wrapped network list into names.
 
-    Accepts `"a.json","b.graphml"` or a bare `a.json, b.graphml`; surrounding
-    single/double quotes and whitespace are stripped and empties dropped.
+    Accepts `"a.json","b.graphml"`, a bare `a.json, b.graphml`, and the same
+    written with semicolons - every other list in the settings is
+    semicolon-delimited, and a semicolon typed here was kept as part of the
+    filename, which then matched nothing.
     """
     if not raw:
         return []
+    tokens = re.split(r'[;,]', raw)
     return [tok.strip().strip('"').strip("'").strip()
-            for tok in raw.split(",") if tok.strip().strip('"').strip("'").strip()]
+            for tok in tokens if tok.strip().strip('"').strip("'").strip()]
 
 
 def _load_network_nodes(path: str) -> set:
