@@ -200,6 +200,48 @@ app._delete_other_projects({}, db_dir)
 ck(not called, 'an empty set never even asks')
 ck(sorted(os.listdir(db_dir)) == before, 'and removes nothing')
 
+print('\n=== the rows are in the order the work happens ===')
+app.show('setup')
+app.update()
+titles = []
+for _row in app.setup_rows.winfo_children():
+    _labs = [w for w in _row.winfo_children() if isinstance(w, tk.Label)]
+    if _labs:
+        titles.append(str(_labs[0].cget('text')))
+
+
+def _at(text):
+    for i, t in enumerate(titles):
+        if t.lower().startswith(text):
+            return i
+    return -1
+
+
+ck(-1 < _at('pubmed baseline') < _at('master annotation'),
+   'the archive is listed above the database built from it',
+   f'{titles[:4]}')
+ck(_at('master annotation') < _at('mesh descriptor'),
+   'and the descriptor file after both', f'{titles[:4]}')
+
+print('\n=== a redraw does not lose what the services answered ===')
+# The answers were written into the row labels from a worker thread. Any
+# redraw destroyed those labels, the thread died, and the row said
+# "checking..." for the rest of the session - Refresh included.
+app._service_state = {name: ('Reachable', '#006400', '12 ms')
+                      for name, _u, _n in app.SERVICES}
+app._service_busy = False
+app.scan_data()                      # what the disk watcher does
+app.update()
+shown = []
+for _row in app.setup_rows.winfo_children():
+    for w in _row.winfo_children():
+        if isinstance(w, tk.Label) and str(w.cget('text')) in (
+                'Reachable', 'checking...', 'Unreachable', 'No answer'):
+            shown.append(str(w.cget('text')))
+ck(shown and all(s == 'Reachable' for s in shown),
+   f'every service still reads Reachable after a redraw: {shown}')
+ck(not app._service_busy, 'and the redraw did not re-ping anyone')
+
 app.destroy()
 print()
 if FAILS:

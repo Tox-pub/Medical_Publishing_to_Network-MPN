@@ -209,6 +209,42 @@ ck(Workbench._unassigned_count(anno) == 2,
 ck(Workbench._unassigned_count(os.path.join(box, 'nope.csv')) == 0,
    'a missing file counts zero rather than raising')
 
+print('\n=== 5. the prefix is demanded only where a file is named after it ===')
+# A fresh copy has no prefix, and the first thing anyone does is Step 0. It
+# downloads the shared archive and compiles the shared database, naming neither
+# after a project - but the check ran before the step was considered, so a new
+# install was refused at the first button it offered.
+import subprocess                                                   # noqa: E402
+
+cli_src = open('src/mesh_aop/cli.py', encoding='utf-8').read()
+ck("args.step not in ('baseline', 'process')" in cli_src,
+   'the check names the steps it does not apply to')
+
+box = tempfile.mkdtemp()
+cfg_path = os.path.join(box, 'mesh_config.json')
+with io.open(cfg_path, 'w', encoding='utf-8') as fh:
+    json.dump({'control_flags': {'custom_file_prefix': '', 'use_reference_data': False},
+               'directories': {'data_dir': os.path.join(box, 'data'),
+                               'results_dir': os.path.join(box, 'results')}}, fh)
+env = dict(os.environ, PYTHONPATH=os.path.abspath('src'))
+
+
+def _run(step):
+    return subprocess.run([sys.executable, '-m', 'mesh_aop.cli', '--step', step,
+                           '--config', cfg_path],
+                          capture_output=True, text=True, env=env)
+
+
+for step in ('baseline', 'process'):
+    r = _run(step)
+    ck(r.returncode == 0 and 'No project prefix' not in (r.stdout + r.stderr),
+       f'--step {step} runs with no prefix set',
+       (r.stdout + r.stderr)[-200:])
+r = _run('network')
+ck(r.returncode != 0 and 'No project prefix is set' in (r.stdout + r.stderr),
+   'a step that writes project files still refuses without one',
+   (r.stdout + r.stderr)[-200:])
+
 print()
 if FAILS:
     print(f'FAILED ({len(FAILS)}):')

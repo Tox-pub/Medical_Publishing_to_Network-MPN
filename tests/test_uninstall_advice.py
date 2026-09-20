@@ -126,6 +126,47 @@ app_src = open('src/mpn/app.py', encoding='utf-8').read()
 ck('removal_instructions' in app_src, 'the application dialog uses it')
 ck('U.pip_hint()' not in app_src, 'and no longer prints the bare hint')
 
+print('\n=== the per-user folder goes too, once nothing is left in it ===')
+# Every entry under it was listed and removed one at a time, and the folder
+# they lived in stayed - empty, and named after the program. On Linux that is
+# the ~/.local/share/MPN a user finds after a complete uninstall.
+import shutil                                                       # noqa: E402
+from pathlib import Path                                            # noqa: E402
+
+box = Path(tempfile.mkdtemp())
+os.environ['LOCALAPPDATA'] = str(box)
+os.environ['XDG_DATA_HOME'] = str(box)
+from mesh_aop import paths as _paths                                # noqa: E402
+
+root = Path(_paths.user_root())
+(root / 'logs').mkdir(parents=True, exist_ok=True)
+(root / 'manual').mkdir(parents=True, exist_ok=True)
+U.prune_empty_state()
+ck(not root.is_dir(), f'an empty tree is removed: {root}')
+
+(root / 'data').mkdir(parents=True, exist_ok=True)
+(root / 'data' / 'kept.db').write_text('x')
+U.prune_empty_state()
+ck(root.is_dir(), 'a folder with anything still in it is left alone')
+shutil.rmtree(box, ignore_errors=True)
+
+print('\n=== the applications-menu entry belongs to the inventory ===')
+# Only the mpn-uninstall script removed it, so uninstalling from the window
+# left the program in the menu after the program was gone.
+menu = Path(tempfile.mkdtemp())
+(menu / 'mpn.desktop').write_text(
+    '[Desktop Entry]\nName=MPN\nExec="/home/u/MPN-3.2.10-linux-x86_64/MPN"\n')
+(menu / 'source.desktop').write_text(
+    '[Desktop Entry]\nName=MPN\nExec=/home/u/.local/share/mpn/venv/bin/mpn\n')
+(menu / 'firefox.desktop').write_text(
+    '[Desktop Entry]\nName=Firefox\nExec=/usr/bin/firefox %u\n')
+(menu / 'lookalike.desktop').write_text(
+    '[Desktop Entry]\nName=Other\nExec=/opt/thing/mpn-lookalike\n')
+found = sorted(p.name for p in U.desktop_entries(folder=menu))
+ck(found == ['mpn.desktop', 'source.desktop'],
+   f'ours are matched and nothing else is: {found}')
+shutil.rmtree(menu, ignore_errors=True)
+
 print()
 if FAILS:
     print(f'FAILED ({len(FAILS)}):')
