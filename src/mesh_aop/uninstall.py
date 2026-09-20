@@ -278,7 +278,8 @@ def inventory(project_dir, config=None):
     if not _paths.is_portable(root):
         user_data = (dirs.get('data_dir') or '').strip() or _paths.default_data_dir()
         _add(items, Path(user_data), DERIVED, 'Data folder (your profile)',
-             'Downloaded archives and the databases built from them.')
+             'Downloaded archives, the databases built from them, and the '
+             'master annotations library of every stratum assigned so far.')
         user_results = (dirs.get('results_dir') or '').strip() or _paths.default_results_dir()
         _add(items, Path(user_results), RESULTS, 'Results folder (your profile)',
              'Your figures, workbooks and reports. Not removed unless you ask.')
@@ -395,19 +396,74 @@ def find_shortcuts(project_dir=None):
     return found
 
 
+def desktop_entries(project_dir=None, folder=None):
+    """Applications-menu entries on Linux that point into this program.
+
+    The launcher writes one on first run and install.sh writes another. Only
+    Windows shortcuts were tracked here, so the window's own uninstall screen
+    left the menu entry behind: the program was gone and its icon was still in
+    the menu. The `mpn-uninstall` script removed it, and the two front-ends are
+    supposed to agree about what "clean" means.
+
+    `folder` is for the test suite; ownership is decided by what the entry
+    launches, never by its filename.
+    """
+    if folder is None:
+        if sys.platform == 'win32' or sys.platform == 'darwin':
+            return []
+        base = (os.environ.get('XDG_DATA_HOME')
+                or os.path.join(os.path.expanduser('~'), '.local', 'share'))
+        folder = Path(base) / 'applications'
+    folder = Path(folder)
+    if not folder.is_dir():
+        return []
+    root = str(Path(project_dir).resolve()).lower() if project_dir else None
+    found = []
+    for entry in sorted(folder.glob('*.desktop')):
+        try:
+            text = entry.read_text(encoding='utf-8', errors='replace')
+        except OSError:
+            continue
+        for line in text.splitlines():
+            if not line.lower().startswith('exec='):
+                continue
+            raw = line.split('=', 1)[1].strip()
+            # A quoted path may contain spaces; an unquoted one is followed by
+            # its arguments.
+            if raw.startswith('"'):
+                target = raw[1:].split('"', 1)[0].lower()
+            else:
+                target = raw.split(' ')[0].lower()
+            # Matched on a whole path segment, never on a prefix: an unrelated
+            # program at /opt/thing/mpn-lookalike is not this one.
+            parts = [p for p in target.replace('\\', '/').split('/') if p]
+            name = parts[-1] if parts else ''
+            if ((root and target.startswith(root))
+                    or 'mpn' in parts[:-1]
+                    or name in ('mpn', 'mpn-pipeline')):
+                found.append(entry)
+            break
+    return found
+
+
 def _add_shortcuts(items, root):
-    """Report Start-menu and Desktop shortcuts as their own entry."""
+    """Report Start-menu, Desktop and applications-menu entries."""
     links = find_shortcuts(root)
-    if not links:
-        return
-    where = sorted({('Desktop' if 'desktop' in str(p.parent).lower()
-                     else 'Start menu') for p in links})
-    items.append(Item(
-        links[0], APPLICATION,
-        f'Shortcuts ({", ".join(where)})',
-        f'{len(links)} shortcut(s) pointing at this program. '
-        f'An interrupted uninstall leaves these behind.',
-        targets=links))
+    if links:
+        where = sorted({('Desktop' if 'desktop' in str(p.parent).lower()
+                         else 'Start menu') for p in links})
+        items.append(Item(
+            links[0], APPLICATION,
+            f'Shortcuts ({", ".join(where)})',
+            f'{len(links)} shortcut(s) pointing at this program. '
+            f'An interrupted uninstall leaves these behind.',
+            targets=links))
+    entries = desktop_entries(root)
+    if entries:
+        items.append(Item(
+            entries[0], APPLICATION, 'Applications-menu entry',
+            f'{len(entries)} .desktop entry pointing at this program.',
+            targets=entries))
 
 
 def _clear_readonly(func, path, _exc):
@@ -590,7 +646,42 @@ def remove(items, dry_run=False, on_event=None):
             removed += 1
             freed += item.bytes
             say('done', f'{item.label} ({item.gb:.2f} GB)')
+    prune_empty_state(dry_run=dry_run, on_event=on_event)
     return removed, freed, failures, deferred
+
+
+def _holds_no_files(folder):
+    """True when a tree contains no files at all - only empty directories."""
+    for _root, _dirs, files in os.walk(folder):
+        if files:
+            return False
+    return True
+
+
+def prune_empty_state(dry_run=False, on_event=None):
+    """Remove the program's own folder once nothing of the user's is left in it.
+
+    Everything under the per-user folder is inventoried and removed one entry
+    at a time - data, results, logs, the rendered manual, the settings file -
+    and the folder they sat in was left behind, empty and named after the
+    program. An uninstall that leaves a folder called MPN has not finished.
+
+    Only ever an empty tree: a single file anywhere beneath it means something
+    was kept on purpose, and the folder stays.
+    """
+    say = on_event or (lambda *_: None)
+    from . import paths as _paths
+    gone = []
+    for folder in (Path(_paths.user_root()),):
+        try:
+            if folder.is_dir() and _holds_no_files(folder):
+                if not dry_run:
+                    shutil.rmtree(folder, ignore_errors=True)
+                gone.append(folder)
+                say('done', f'{folder} (empty folder left by the removals above)')
+        except OSError:
+            pass
+    return gone
 
 
 def package_is_installed():

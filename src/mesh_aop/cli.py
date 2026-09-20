@@ -860,12 +860,18 @@ def main():
         config.params['_run_baseline_updates'] = args.with_updates
         config.params['_delete_corrupt_db'] = args.rebuild_corrupt
 
-    # A project needs a name before it writes anything. The prefix ships empty
-    # so a fresh install does not inherit this project's name, which means it
-    # has to be checked - without one, every file would be called _pmids.db,
-    # _final_network_with_relevance.json and so on, and two projects would
-    # collide on the first run.
-    if not str(config.prefix or '').strip():
+    # A project needs a name before it writes anything NAMED FOR A PROJECT. The
+    # prefix ships empty so a fresh install does not inherit this project's
+    # name, which means it has to be checked - without one, every file would be
+    # called _pmids.db, _final_network_with_relevance.json and so on, and two
+    # projects would collide on the first run.
+    #
+    # Step 0 and Step 1 are the exception, and the check has to say so. They
+    # build what every project shares - the PubMed archive, the master
+    # annotation database, the MeSH vocabulary - and name none of it for a
+    # project. Demanding a prefix there blocks the first thing a new install
+    # does, to protect filenames that step never writes.
+    if args.step not in ('baseline', 'process') and not str(config.prefix or '').strip():
         print("\n" + "<" * 30 + ">" * 30)
         print("[CRITICAL ERROR] No project prefix is set")
         print("<" * 30 + ">" * 30)

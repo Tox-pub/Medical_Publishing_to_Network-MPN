@@ -104,6 +104,12 @@ class Workbench(tk.Tk):
         self._watch_paths = []
         self._watch_sig = None
         self._watch_job = None
+        # What each internet service last answered, kept outside the widgets so
+        # a redraw of the table cannot lose an answer that is on its way.
+        self._service_state = {}
+        self._service_labels = {}
+        self._service_pending = set()
+        self._service_busy = False
 
         self.title('MPN')
         self.configure(bg=FACE)
@@ -1187,13 +1193,19 @@ class Workbench(tk.Tk):
         act.pack(fill='x')
         tk.Button(act, text='Continue', width=11, font=self.f_bold,
                   command=lambda: self.show('settings')).pack(side='right', padx=2)
-        tk.Button(act, text='Refresh', width=11, command=self.scan_data
+        tk.Button(act, text='Refresh', width=11,
+                  command=lambda: self.scan_data(recheck=True)
                   ).pack(side='right', padx=2)
         self.after(120, self.scan_data)
         self._watch_job = self.after(3000, self._watch_disk)
 
-    def scan_data(self):
-        """Measure what is on disk, at the paths the pipeline actually uses."""
+    def scan_data(self, recheck=False):
+        """Measure what is on disk, at the paths the pipeline actually uses.
+
+        `recheck` asks the internet services again as well. The disk watcher
+        leaves their last answers alone: it fires every few seconds, and the
+        services are somebody else's servers.
+        """
         for w in self.setup_rows.winfo_children():
             w.destroy()
 
@@ -1205,23 +1217,30 @@ class Workbench(tk.Tk):
 
         raw, proc = cfg.active_raw_dir, cfg.active_source_dir
         prefix = cfg.prefix
+        # Until a project is named, the rows named after it said "( )". The
+        # three files below belong to a project; the four above them do not.
+        named = prefix or 'no project name yet'
         self.setup_where.config(
             text=f'  data  {raw}\n  work  {proc}')
 
         f = cfg.files
+        # In the order the work is done: the archive is downloaded, the updates
+        # are optional, the database is compiled from them, and the descriptor
+        # file follows. A row that cannot be used until the row below it has run
+        # is a row in the wrong place.
         items = [
-            dict(key='master', label='Master annotation database',
-                 path=str(f['master_db']),
-                 note='Built from the archive. Required for every run. Hours to rebuild.',
-                 build='Build', rebuild='Rebuild', delete=True, cost='hours'),
             dict(key='baseline', label='PubMed baseline archive',
                  path=str(raw / 'pubmed_baseline'),
-                 note='The yearly snapshot, ~50 GB. Only needed to build the database.',
+                 note='The yearly snapshot, ~50 GB. Downloaded first; the database is built from it.',
                  build='Download', rebuild='Re-download', delete=True, cost='hours'),
             dict(key='updates', label='PubMed daily updates',
                  path=str(raw / 'pubmed_updates'),
-                 note='Records published since the baseline snapshot.',
+                 note='Optional. Records published since the baseline snapshot.',
                  build='Download', rebuild='Re-download', delete=True, cost='minutes'),
+            dict(key='master', label='Master annotation database',
+                 path=str(f['master_db']),
+                 note='Compiled from the archive above. Required for every run. Hours to rebuild.',
+                 build='Build', rebuild='Rebuild', delete=True, cost='hours'),
             # This was the one row on the screen with nothing to press. The
             # note said "downloaded automatically", which is true of a full
             # pipeline run and no help at all to someone who is on this screen
@@ -1231,15 +1250,15 @@ class Workbench(tk.Tk):
                  note='Defines the stop-word vocabulary. Fetched from the NLM.',
                  build='Generate', rebuild='Regenerate', delete=True,
                  cost='minutes'),
-            dict(key='pmids', label=f'Retrieved PMIDs  ({prefix})',
+            dict(key='pmids', label=f'Retrieved PMIDs  ({named})',
                  path=str(f['pmids_db']),
                  note='Everything the search and its citation hops returned.',
                  delete=True, cost='hours'),
-            dict(key='cleaned', label=f'Citation database  ({prefix})',
+            dict(key='cleaned', label=f'Citation database  ({named})',
                  path=str(f['cleaned_db']),
                  note='Query results and citation generations, with MeSH attached.',
                  delete=True, cost='minutes'),
-            dict(key='relevance', label=f'Relevance database  ({prefix})',
+            dict(key='relevance', label=f'Relevance database  ({named})',
                  path=str(f['relevance_db']),
                  note='Per-article scores for this project.',
                  delete=True, cost='minutes'),
@@ -1293,7 +1312,7 @@ class Workbench(tk.Tk):
 
         self._setup_other_projects(cfg, prefix)
         self._setup_folder_totals(cfg)
-        self._setup_services()
+        self._setup_services(recheck)
 
         self.setup_total.config(
             text=f'   On disk now {total:,.2f} GB' +
@@ -1523,13 +1542,25 @@ class Workbench(tk.Tk):
          'Citation counts for the article impact score.'),
     ]
 
-    def _setup_services(self):
+    # How long a service has to answer before the row says that it did not.
+    # SERVICE_TIMEOUT is passed to urlopen; the deadline covers what a socket
+    # timeout does not, a name lookup that hangs. A row that reads "checking..."
+    # for ever tells the reader less than one that reports no answer.
+    SERVICE_TIMEOUT = 8
+    SERVICE_DEADLINE = 15
+
+    def _setup_services(self, recheck=False):
         """One row per external service, with whether it answered just now.
 
-        Checked when the screen opens and again on Refresh, never on the disk
-        timer: a poll every few seconds would be a poll of someone else's
-        server. Each runs in its own thread so four slow services cannot add
-        four timeouts to the wait, and the row updates when its answer lands.
+        The answers live in _service_state, not in the labels. This table is
+        rebuilt whenever a watched file changes, which destroys the labels a
+        check in flight was about to write to - and the row then read
+        "checking..." for ever, with Refresh unable to clear it.
+
+        Checked when the screen opens and on Refresh, never on the disk timer:
+        a poll every few seconds would be a poll of someone else's server. Each
+        service runs in its own thread, so four slow ones cannot add four
+        timeouts to the wait.
         """
         head = tk.Frame(self.setup_rows, bg=FACE)
         head.pack(fill='x', pady=(10, 2), padx=4)
@@ -1539,7 +1570,8 @@ class Workbench(tk.Tk):
                  text='   (checked when this screen opens, and on Refresh)'
                  ).pack(side='left')
 
-        for name, url, note in self.SERVICES:
+        self._service_labels = {}
+        for name, _url, note in self.SERVICES:
             row = tk.Frame(self.setup_rows, bg=FACE)
             row.pack(fill='x', pady=2, padx=4)
             self._setup_cols(row)
@@ -1549,55 +1581,98 @@ class Workbench(tk.Tk):
             tk.Label(row, text=note, bg=FACE, fg=DIM, anchor='w',
                      wraplength=self.px(285), justify='left'
                      ).grid(row=1, column=0, sticky='w')
-            status = tk.Label(row, text='checking...', bg=FACE, fg=DIM,
+            text, colour, extra = self._service_state.get(
+                name, ('checking...', DIM, ''))
+            status = tk.Label(row, text=text, bg=FACE, fg=colour,
                               font=self.f_bold, anchor='w')
             status.grid(row=0, column=1, sticky='w')
-            latency = tk.Label(row, text='', bg=FACE, anchor='e')
+            latency = tk.Label(row, text=extra, bg=FACE, anchor='e')
             latency.grid(row=0, column=2, sticky='e', padx=(0, 8))
             tk.Frame(row, bg='#b0b0b0', height=1).grid(
                 row=2, column=0, columnspan=5, sticky='we', pady=(3, 0))
-            self._ping_async(url, status, latency)
+            self._service_labels[name] = (status, latency)
+        if recheck or not self._service_state:
+            self._check_services()
 
-    def _ping_async(self, url, status_label, latency_label):
-        """Ask one service whether it is there, without blocking the window."""
+    def _check_services(self):
+        """Ask every service at once; collect the answers on the main thread.
+
+        Nothing in the worker touches tkinter. A widget call from another
+        thread is not safe, and here it failed silently: the thread died on
+        RuntimeError and the row kept its placeholder for the rest of the
+        session.
+        """
+        import queue
         import threading
+        import time as _t
+        if self._service_busy:
+            return
+        self._service_busy = True
+        self._service_q = queue.Queue()
+        self._service_pending = {name for name, _u, _n in self.SERVICES}
+        self._service_until = _t.monotonic() + self.SERVICE_DEADLINE
+        for name, url, _note in self.SERVICES:
+            self._service_state[name] = ('checking...', DIM, '')
+            self._paint_service(name)
+            threading.Thread(target=self._probe, args=(name, url),
+                             daemon=True).start()
+        self.after(200, self._drain_services)
 
-        def work():
-            import time as _t
-            import urllib.error
-            import urllib.request
-            t0 = _t.perf_counter()
+    def _probe(self, name, url):
+        """One service, in a worker thread. The answer goes on a queue."""
+        import time as _t
+        import urllib.error
+        import urllib.request
+        t0 = _t.perf_counter()
+        try:
+            req = urllib.request.Request(
+                url, headers={'User-Agent': f'MPN/{__version__}'})
+            with urllib.request.urlopen(req, timeout=self.SERVICE_TIMEOUT) as r:
+                r.read(64)
+            out = ('Reachable', OK, f'{(_t.perf_counter() - t0) * 1000:,.0f} ms')
+        except urllib.error.HTTPError as e:
+            # It answered, which is the question being asked. A 4xx to a probe
+            # is still proof the host is up and reachable.
+            ms = (_t.perf_counter() - t0) * 1000
+            out = (('Reachable', OK, f'{ms:,.0f} ms') if e.code < 500
+                   else ('Server error', WARN, f'HTTP {e.code}'))
+        except Exception as exc:                                   # noqa: BLE001
+            reason = type(exc).__name__.replace('Error', '')
+            out = ('Unreachable', ERR, reason[:18] or 'no answer')
+        self._service_q.put((name, out))
+
+    def _drain_services(self):
+        """Apply what has come back, and stop waiting for what has not."""
+        import queue
+        import time as _t
+        while True:
             try:
-                req = urllib.request.Request(
-                    url, headers={'User-Agent': 'MPN/3.2.10'})
-                with urllib.request.urlopen(req, timeout=8) as r:
-                    r.read(64)
-                ms = (_t.perf_counter() - t0) * 1000
-                out = ('Reachable', OK, f'{ms:,.0f} ms')
-            except urllib.error.HTTPError as e:
-                # It answered, which is the question being asked. A 4xx to a
-                # probe is still proof the host is up and reachable.
-                ms = (_t.perf_counter() - t0) * 1000
-                out = (('Reachable', OK, f'{ms:,.0f} ms') if e.code < 500
-                       else ('Server error', WARN, f'HTTP {e.code}'))
-            except Exception as exc:                               # noqa: BLE001
-                reason = type(exc).__name__.replace('Error', '')
-                out = ('Unreachable', ERR, reason[:18] or 'no answer')
+                name, out = self._service_q.get_nowait()
+            except queue.Empty:
+                break
+            self._service_state[name] = out
+            self._service_pending.discard(name)
+            self._paint_service(name)
+        if self._service_pending and _t.monotonic() < self._service_until:
+            self.after(200, self._drain_services)
+            return
+        for name in list(self._service_pending):
+            self._service_state[name] = ('No answer', WARN, 'timed out')
+            self._paint_service(name)
+        self._service_pending = set()
+        self._service_busy = False
 
-            def apply():
-                # The screen may have been rebuilt by a Refresh while this was
-                # in flight, which destroys the labels it was going to write to.
-                try:
-                    status_label.config(text=out[0], fg=out[1])
-                    latency_label.config(text=out[2])
-                except tk.TclError:
-                    pass
-            try:
-                self.after(0, apply)
-            except tk.TclError:
-                pass
-
-        threading.Thread(target=work, daemon=True).start()
+    def _paint_service(self, name):
+        """Write one answer onto its row, if that row is still on screen."""
+        labels = self._service_labels.get(name)
+        if not labels:
+            return
+        text, colour, extra = self._service_state[name]
+        try:
+            labels[0].config(text=text, fg=colour)
+            labels[1].config(text=extra)
+        except tk.TclError:
+            pass            # the table was redrawn; the answer is kept anyway
 
     def _disk_signature(self):
         """A cheap fingerprint of the tracked files: present, and changed when.
@@ -1818,6 +1893,16 @@ class Workbench(tk.Tk):
                     'database from the archive you already have, use Rebuild on '
                     'the master database row instead.'):
                 return
+            # A first download is not destructive, so it is a plain yes/no
+            # rather than a typed word - but it is 50 GB and several hours, and
+            # it started on a single click with nothing said about either.
+            if not present and not messagebox.askyesno(
+                    'Download the PubMed baseline?',
+                    'Roughly 50 GB is downloaded, which takes hours on a fast '
+                    'connection.\n\nThe download resumes if it is interrupted, '
+                    'and the archive can be deleted once the database is built.'
+                    '\n\nContinue?', icon='question', default='no'):
+                return
             if wants_updates:
                 extra.append('--with-updates')
             self.start_run('baseline', extra, title='downloading the PubMed baseline')
@@ -1837,14 +1922,24 @@ class Workbench(tk.Tk):
                     'machine starts swapping.'):
                 return
             extra.append('--rebuild-corrupt')
-        elif not have_archive and not self.confirm_typed(
-                'Download and build', 'REBUILD',
-                'No archive is present, so it is downloaded first: roughly 50 GB, '
-                'and several hours on a fast connection. Compiling it afterwards '
-                'depends on memory more than on processor - 16 GB or more runs '
-                'comfortably, less than that slows sharply.\n\nThe download '
-                'resumes if interrupted, and the archive can be deleted '
-                'afterwards.'):
+        elif not have_archive:
+            if not self.confirm_typed(
+                    'Download and build', 'REBUILD',
+                    'No archive is present, so it is downloaded first: roughly '
+                    '50 GB, and several hours on a fast connection. Compiling it '
+                    'afterwards depends on memory more than on processor - 16 GB '
+                    'or more runs comfortably, less than that slows sharply.'
+                    '\n\nThe download resumes if interrupted, and the archive '
+                    'can be deleted afterwards.'):
+                return
+        # The archive is already here, so nothing is downloaded - but compiling
+        # it is still hours of work, and that was not said before it started.
+        elif not messagebox.askyesno(
+                'Build the master annotation database?',
+                'The archive already on disk is compiled into the database. '
+                'Nothing is downloaded.\n\nThis takes hours, and depends far '
+                'more on memory than on processor: 16 GB or more runs '
+                'comfortably.\n\nContinue?', icon='question', default='no'):
             return
 
         if have_archive:
