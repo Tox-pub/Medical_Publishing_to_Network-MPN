@@ -208,13 +208,24 @@ TABS = [
     ('Stop words', [
         F('_heading.vocabulary', 'Which MeSH terms the analysis may see',
           'heading', '',
-          'MeSH is organised into sixteen trees. A tick below EXCLUDES that '
-          'tree: every term in it becomes a stop word and can never enter the '
-          'network. The four left unticked are the ones a biological strata '
-          'analysis is built from - Anatomy, Diseases, Chemicals and Drugs, '
-          'Phenomena and Processes. A different question needs a different '
-          'four: research geography needs Geographicals, workforce studies '
-          'need Disciplines and Occupations.', '', ''),
+          'A ticked box excludes that tree entirely. Individual headings can '
+          'be excluded as well, in the box below the list - semicolon '
+          'delimited, spelled as MeSH spells them: Humans; Adult; Middle Aged. '
+          'Both apply to the next run. The term list itself only needs '
+          'rebuilding when the MeSH release year changes.', '', ''),
+
+        # Saved like any other setting, drawn inside the tree list. Male and
+        # Female are check tags in no tree, so the stored switch is the other
+        # way round - and a heading of its own said more about the MeSH
+        # taxonomy than about the choice being made.
+        F('stop_words.keep_sexes', 'Keep Male and Female', 'hidden', False,
+          'Male and Female are check tags, in no MeSH tree. Ticked here, they '
+          'are excluded like any other term in the list.',
+          'Default: ticked, so both are excluded.',
+          'They are indexed on a large share of clinical articles, which makes '
+          'them two of the highest-degree nodes in any network that keeps '
+          'them - connected to nearly everything and therefore distinguishing '
+          'nothing. Leave the box ticked unless sex is part of the question.'),
 
         F('stop_words.excluded_trees', 'Trees to exclude', 'trees',
           ';'.join(_vocabulary.DEFAULT_EXCLUDED),
@@ -224,22 +235,6 @@ TABS = [
           'display filter - a term excluded here is absent from the network, '
           'the scores and the benchmark alike. Changing it changes the '
           'results, so two runs to be compared must use the same trees.'),
-
-        F('_heading.checktags', 'Check tags - outside the trees entirely',
-          'heading', '',
-          'Male and Female are check tags, not descriptors: they appear in no '
-          'MeSH tree, so no box above can reach them and this switch is the '
-          'only control over them.', '', ''),
-
-        F('stop_words.keep_sexes', 'Keep Male and Female', 'bool', False,
-          'Keeps the two sex terms in the analysis.',
-          'Default: off - both are excluded.',
-          'Male and Female are check tags: they sit in no tree, so no choice '
-          'above can exclude them and this switch is the only way to. They are '
-          'indexed on a large share of clinical articles, which makes them two '
-          'of the highest-degree nodes in any network that keeps them - '
-          'connected to nearly everything and therefore distinguishing '
-          'nothing. Turn this on when sex is part of the question.'),
 
         F('stop_words.extra_terms', 'Also exclude these terms', 'text', '',
           'Individual MeSH headings to exclude, on top of the trees above. '
@@ -251,17 +246,19 @@ TABS = [
           'the MeSH heading exactly; a term that matches nothing is ignored '
           'silently, so check the run log for the count if in doubt.'),
 
-        F('stop_words.rebuild', 'Rebuild the stop-word list from the MeSH XML',
-          'bool', False,
-          'Re-reads the descriptor XML and regenerates the term list from '
-          'scratch.',
-          'Default: off - it is built once and kept.',
-          'Not needed to change the trees above: which tree each term belongs '
-          'to is recorded when the list is first built, so a different '
-          'selection is applied straight from that record in about a second. '
-          'Turn this on after moving to a new MeSH release year, or if the '
-          'run log says the term list predates the tree record. It adds '
-          'several minutes to the process step.'),
+        # A button, not a switch. It was a checkbox that only acted when the
+        # step list happened to include Step 1, and did nothing at all
+        # otherwise - silently. The same action already has a button on the
+        # Database page, beside the descriptor file it re-reads.
+        F('_action.refresh_mesh', 'Rebuild the stop-word list', 'action', '',
+          'Re-reads the MeSH descriptor file and builds the term list again. '
+          'Takes a few minutes.',
+          'Not needed to change the trees or the terms above: those apply to '
+          'the next run on their own.',
+          'Needed when the MeSH release year changes. The same button is on '
+          'the Database page, on the MeSH descriptor file row. A change to '
+          'the trees or the terms only alters a network when the network is '
+          'built again - redrawing the figures uses the network as it was.'),
     ]),
     ('Credentials', [
         F('credentials.entrez_email', 'NCBI e-mail', 'text', '',

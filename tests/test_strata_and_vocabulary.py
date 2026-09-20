@@ -205,12 +205,16 @@ ck(var is not None, 'the trees field has a variable like any other setting')
 holder = app.widgets.get('stop_words.excluded_trees')
 boxes = [w for w in (holder.winfo_children() if holder else [])
          if isinstance(w, tk.Checkbutton)]
-ck(len(boxes) == 16, f'sixteen checkboxes are drawn: {len(boxes)}')
+# Sixteen trees and the check tags, which are one more thing to exclude and
+# belong in the same list rather than under a heading of their own.
+ck(len(boxes) == 17, f'sixteen trees plus the check tags: {len(boxes)}')
 ck(all(b.winfo_ismapped() for b in boxes),
    'and every one of them is actually on screen')
 
-labels = [str(b.cget('text')) for b in boxes]
+labels = [str(b.cget('text')).strip() for b in boxes]
 ck(labels[0].startswith('A - '), f'labelled by letter and name: {labels[0]!r}')
+ck(any(t.startswith('Male and Female') for t in labels),
+   f'the check tags are in the list: {labels[-1]!r}')
 ck(any('Geographicals' in t for t in labels), 'including Geographicals')
 
 # The one that matters: ticking a box has to reach the stored string, and
@@ -251,8 +255,14 @@ def ticked():
 
 
 state = ticked()
-on = sorted(k for k, v in state.items() if v)
+# Tree letters only. The check tags share the list but are their own setting,
+# checked below.
+on = sorted(k for k, v in state.items() if v and len(k) == 1)
 ck(on == ['B', 'Z'], f'loading a saved value ticks exactly those boxes: {on}')
+ck(state.get('Male and Female') is not None,
+   'and the check tags are one more box in the same list')
+ck(state['Male and Female'] != bool(app.vars['stop_words.keep_sexes'].get()),
+   'ticked there means excluded, which is the opposite of "keep"')
 ck(not state['A'], 'a box ticked earlier is cleared, not left behind')
 ck(not state['E'], 'and the rest are unticked')
 
@@ -268,13 +278,13 @@ ck('Nurses' not in words_from_ui,
    'while Named Groups, now unticked, is kept')
 
 # The tree block spans sixteen rows of a grid whose other fields are one row
-# each. Get the rowspan wrong and it lands on top of the three settings below
-# it - which looks like a rendering glitch and is actually two controls sharing
-# one cell, where only the last one drawn can be clicked.
+# each. Get the rowspan wrong and it lands on top of the settings below it -
+# which looks like a rendering glitch and is actually two controls sharing one
+# cell, where only the last one drawn can be clicked.
 print('\n=== 12b. and it does not sit on top of the settings below it ===')
 stack = []
 for key in ('stop_words.excluded_trees', 'stop_words.keep_sexes',
-            'stop_words.extra_terms', 'stop_words.rebuild'):
+            'stop_words.extra_terms', '_action.refresh_mesh'):
     wdg = app.widgets.get(key)
     ck(wdg is not None and wdg.winfo_ismapped(), f'{key} is on screen')
     if wdg is not None:
@@ -282,12 +292,20 @@ for key in ('stop_words.excluded_trees', 'stop_words.keep_sexes',
         top = wdg.winfo_rooty() - app.winfo_rooty()
         stack.append((key, top, top + wdg.winfo_height()))
 
-clashes = [(a[0], b[0]) for i, a in enumerate(stack) for b in stack[i + 1:]
+spans = dict((k, (t, b)) for k, t, b in stack)
+# The check tags are drawn INSIDE the tree block - they are one more row of
+# that list - so they are expected to sit within it, not below it.
+trees, sexes = spans['stop_words.excluded_trees'], spans['stop_words.keep_sexes']
+ck(trees[0] <= sexes[0] and sexes[1] <= trees[1],
+   'the check tags sit inside the tree list', f'trees {trees}, sexes {sexes}')
+
+below = [(k, t, b) for k, t, b in stack if k != 'stop_words.keep_sexes']
+clashes = [(a[0], b[0]) for i, a in enumerate(below) for b in below[i + 1:]
            if a[1] < b[2] and b[1] < a[2]]
-ck(not clashes, f'no two of them overlap', f'{clashes}')
-ck(all(stack[i][2] <= stack[i + 1][1] for i in range(len(stack) - 1)),
+ck(not clashes, 'no two of the settings overlap', f'{clashes}')
+ck(all(below[i][2] <= below[i + 1][1] for i in range(len(below) - 1)),
    'and they stack in the order the schema lists them',
-   f'{[(k, t, b) for k, t, b in stack]}')
+   f'{below}')
 
 print('\n=== 13. nothing user-facing still says "AOP level" ===')
 blob = []

@@ -213,7 +213,9 @@ class Workbench(tk.Tk):
                     val = int(float(raw))
                 elif fld.kind == 'float':
                     val = float(raw)
-                elif fld.kind == 'bool':
+                elif fld.kind in ('bool', 'hidden'):
+                    # 'hidden' is a real setting drawn inside another control;
+                    # without this it saved the string "True".
                     val = bool(raw)
                 else:
                     val = str(raw)
@@ -2127,6 +2129,22 @@ class Workbench(tk.Tk):
             if (f.key in self._PREFILL_DIRS and not str(cur or '').strip()
                     and not self.paths.is_portable(self.repo_dir)):
                 cur = str(self._PREFILL_DIRS[f.key](self.repo_dir))
+            if f.kind == 'hidden':
+                # Saved and loaded like any other setting, but drawn as part of
+                # another control: the check tags belong in the tree list,
+                # where they read as one more thing being excluded.
+                self.vars[f.key] = tk.BooleanVar(value=bool(cur))
+                continue
+            if f.kind == 'action':
+                # Something to press, not something to set. The description
+                # pane carries what it does, like every other field here.
+                w = tk.Button(grid, text=f.label, width=32,
+                              command=getattr(self, self._ACTIONS[f.key]))
+                w.grid(row=r, column=0, columnspan=2, sticky='w', pady=(10, 3))
+                self.widgets[f.key] = w
+                for ev in ('<Enter>', '<Button-1>', '<FocusIn>'):
+                    w.bind(ev, lambda _e, fl=f: self._help(fl))
+                continue
             if f.kind == 'bool':
                 var = tk.BooleanVar(value=bool(cur))
                 w = tk.Checkbutton(grid, text=f.label, variable=var, bg=FACE,
@@ -2285,6 +2303,40 @@ class Workbench(tk.Tk):
         per_col = -(-len(vocabulary.TREES) // cls._TREE_COLUMNS)
         return first_row + per_col          # +1 for the label row above them
 
+    # Buttons that live in the settings form, by the key the schema gives them.
+    _ACTIONS = {'_action.refresh_mesh': '_refresh_mesh_support'}
+
+    def _refresh_mesh_support(self):
+        """Rebuild the MeSH term list from the descriptor file.
+
+        The same action as the Database page's MeSH descriptor row, offered
+        here as well: this is the tab where someone wonders whether their stop
+        words are current, and sending them to another screen to act on that
+        is one screen too many.
+        """
+        if not messagebox.askyesno(
+                'Rebuild the stop-word list?',
+                'The MeSH descriptor file is read again and the term list '
+                'built from it. This takes a few minutes.\n\n'
+                'It is not needed to change the trees or the terms - those '
+                'apply to the next run on their own.\n\nContinue?',
+                icon='question', default='no'):
+            return
+        self.start_run('process', ['--refresh-mesh-support'],
+                       title='rebuilding the stop-word list')
+
+    def _exclusion_box(self, parent, text, var, command, fld):
+        """One entry in the exclusion list: a box and a name.
+
+        A plain Checkbutton, drawn by Windows. A custom indicator sat a pixel
+        or two off the column the rest of the list lines up on, which is worse
+        than the tick being the wrong metaphor.
+        """
+        cb = tk.Checkbutton(parent, text=text, variable=var, bg=FACE,
+                            activebackground=FACE, anchor='w', command=command)
+        cb.bind('<Enter>', lambda _e, fl=fld: self._help(fl))
+        return cb
+
     def _tree_checkboxes(self, grid, row, fld, current):
         """The sixteen MeSH trees as checkboxes over one semicolon setting.
 
@@ -2317,11 +2369,31 @@ class Workbench(tk.Tk):
             # The full tree names run to sixty characters; the long ones are
             # cut so two columns still fit a window the user can resize down.
             shown = name if len(name) <= 34 else name[:32].rstrip() + '…'
-            cb = tk.Checkbutton(holder, text=f'{letter} - {shown}', variable=v,
-                                bg=FACE, activebackground=FACE, anchor='w',
-                                command=write_back)
+            cb = self._exclusion_box(holder, f'{letter} - {shown}', v,
+                                     write_back, fld)
+            # Column 0 holds eight trees and then the check tags; column 1
+            # holds the other eight.
             cb.grid(row=i % per_col, column=i // per_col, sticky='w', padx=(0, 18))
-            cb.bind('<Enter>', lambda _e, fl=fld: self._help(fl))
+
+        # The check tags, in the same list. They are one more thing to exclude,
+        # and the switch behind them is stored the other way round - keep_sexes
+        # - so the box shows the exclusion and writes back the opposite.
+        keep = self.vars.get('stop_words.keep_sexes')
+        if keep is not None:
+            drop = tk.BooleanVar(value=not bool(keep.get()))
+            # Gridded exactly like the boxes above it: same column, same
+            # padding, nothing special. It is one more row in the list.
+            sexes = self._exclusion_box(
+                holder, 'Male and Female - check tags', drop,
+                lambda: keep.set(not drop.get()),
+                self._field('stop_words.keep_sexes'))
+            sexes.grid(row=per_col, column=0, sticky='w', padx=(0, 18))
+            # Registered like any other field's widget: it is the control for
+            # that setting, wherever it happens to be drawn.
+            self.widgets['stop_words.keep_sexes'] = sexes
+            keep.trace_add(
+                'write', lambda *_a: drop.get() == (not keep.get())
+                or drop.set(not keep.get()))
 
         # Loading a saved config sets the StringVar directly, so the boxes have
         # to follow it rather than only drive it.
