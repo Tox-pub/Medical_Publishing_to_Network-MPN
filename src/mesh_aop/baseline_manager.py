@@ -654,45 +654,23 @@ class PubMedBaselineManager:
                 "downloaded ('Always keep on this device') and re-run."
             )
 
-    # How long the build waits for any parser process to hand back a finished
-    # file before it stops and says so. A shard is a handful of files and takes
-    # seconds to a few minutes; twenty minutes of silence is not slow work.
-    STALL_SECONDS = 20 * 60
     _POLL_SECONDS = 5
 
     def _next_shard(self, results, block):
-        """The next finished shard, or a clear stop instead of waiting forever.
+        """The next finished shard, waiting in short steps so Pause and Abort work.
 
-        multiprocessing.Pool never reports a worker that dies - one killed for
-        running out of memory, say. It replaces the process and the task it
-        held is simply lost, so a plain loop over imap_unordered waits for a
-        result that will never come, with no error, while the window says the
-        build is working. It did exactly that for eight hours.
-
-        So the wait is taken a few seconds at a time. Between waits the run
-        looks for a pause or an abort - the build was the one long step that
-        could not be stopped, because it never reached a checkpoint while it
-        waited - and after STALL_SECONDS with nothing back it stops.
+        The build was the one long step that could not be stopped while it was
+        running: waiting for a worker in one uninterruptible call, it never
+        reached a checkpoint, so a pause or a stop was only noticed between
+        blocks - minutes apart, and never at all if the wait did not end.
         """
         from . import runcontrol
-        waited = 0.0
         while True:
             try:
                 return results.next(timeout=self._POLL_SECONDS)
             except multiprocessing.TimeoutError:
                 pass
-            # A pause is time the user chose, not time the workers lost.
-            if runcontrol.checkpoint(f'database build, block {block}'):
-                waited = 0.0
-                continue
-            waited += self._POLL_SECONDS
-            if waited >= self.STALL_SECONDS:
-                raise RuntimeError(
-                    f'No file finished parsing in {self.STALL_SECONDS // 60} '
-                    f'minutes (block {block}). A parser process has stopped, '
-                    f'most often because the machine ran out of memory. Run the '
-                    f'build again to resume from the last checkpoint; if it '
-                    f'stops again, use fewer parser processes with --max-workers.')
+            runcontrol.checkpoint(f'database build, block {block}')
 
     def compile_database(self):
         """Parse all downloaded XML into the master SQLite database in parallel, with resumable checkpoints."""
