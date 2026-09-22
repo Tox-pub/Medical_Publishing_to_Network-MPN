@@ -1800,8 +1800,13 @@ class Workbench(tk.Tk):
         # Traced on the variable rather than bound to <KeyRelease>: a word put
         # in by a right-click paste produces no key event, and the button would
         # have stayed disabled with the correct word sitting in the box.
+        #
+        # Case does not matter. Typing the word is the deliberate act; holding
+        # Shift is not, and "rebuild" left the button greyed out with nothing
+        # to say why.
         def check(*_):
-            go.config(state='normal' if typed.get().strip() == word else 'disabled')
+            go.config(state='normal' if typed.get().strip().upper() == word.upper()
+                      else 'disabled')
         typed.trace_add('write', check)
         entry.bind('<Return>',
                    lambda e: go.invoke() if str(go['state']) == 'normal' else None)
@@ -1838,6 +1843,7 @@ class Workbench(tk.Tk):
         except OSError as exc:
             messagebox.showerror('Could not delete', f"{item['path']}\n\n{exc}")
             return
+        self.status.config(text=f"Deleted: {item['label']} ({gb:,.2f} GB freed)")
         self.scan_data()
 
     def _setup_build(self, item, present):
@@ -2611,6 +2617,9 @@ class Workbench(tk.Tk):
         # just produced actually is.
         self._run_step = step
         self._run_extra = list(extra)
+        # Where the run was started from, so an abort can return there - a
+        # database build aborted from the Database page belongs back on it.
+        self._run_origin = self.current_screen
         self.show('running')
         self.run_title.config(text=f'Running: {title}')
         self._log_clear()
@@ -2716,9 +2725,15 @@ class Workbench(tk.Tk):
                 text='Pausing - it will stop at the next safe point (this can '
                      'take a few minutes on a long step).', fg=WARN)
 
+    def _return_from_run(self):
+        """Back to the screen the run was started from."""
+        origin = getattr(self, '_run_origin', None)
+        self.show(origin if origin in self.screens and origin != 'running'
+                  else 'settings')
+
     def cancel_run(self):
         if not self.runner.is_running():
-            self.show('settings')
+            self._return_from_run()
             return
         # Say what is actually lost. "Partial outputs may be left on disk" told
         # the user nothing they could act on; the elapsed time and the offer to
@@ -3045,9 +3060,11 @@ class Workbench(tk.Tk):
             self.btn_results.config(state='normal')
             self._offer_next_screen()
         elif rc == -1:
-            self._log('--- aborted ---', 'warn')
+            self._log(f'--- run aborted after {elapsed/60:.1f} min ---', 'warn')
             self.run_status.config(text='Aborted.', fg=WARN)
             self._check_after_abort()
+            self.status.config(text=f'Run aborted after {elapsed/60:.1f} min.')
+            self._return_from_run()
         elif rc == 130:
             # The pipeline saw the stop request at a checkpoint and exited
             # tidily. Worth distinguishing from a crash: nothing is half-written.
@@ -3534,6 +3551,10 @@ class Workbench(tk.Tk):
         ent = tk.Entry(act, textvariable=self.un_confirm, width=12, bg=FIELD,
                        relief='sunken', bd=2)
         ent.pack(side='left', padx=6)
+        # Enter does what the button does, as it does in every other typed
+        # confirmation in the program.
+        ent.bind('<Return>', lambda _e: self.un_go.invoke()
+                 if str(self.un_go['state']) == 'normal' else None)
         self.un_go = tk.Button(act, text='Remove', width=12, font=self.f_bold,
                                state='disabled', command=self._do_uninstall)
         self.un_go.pack(side='left')
@@ -3546,7 +3567,7 @@ class Workbench(tk.Tk):
         self.un_confirm.trace_add('write', lambda *_: self._un_gate())
 
     def _un_gate(self):
-        ready = (self.un_confirm.get().strip() == 'REMOVE'
+        ready = (self.un_confirm.get().strip().upper() == 'REMOVE'
                  and any(v.get() for v in getattr(self, 'un_vars', {}).values()))
         self.un_go.config(state='normal' if ready else 'disabled')
 
@@ -3642,6 +3663,9 @@ class Workbench(tk.Tk):
         if deferred:
             msg += '\n\nClose the window now to finish.'
         messagebox.showinfo('Uninstall', msg)
+        # The word is spent. Left in the box, the rescan below re-armed Remove
+        # for whatever was still ticked, one click from a second deletion.
+        self.un_confirm.set('')
         self.scan_uninstall()
 
     def _open_results(self):
@@ -3654,6 +3678,7 @@ class Workbench(tk.Tk):
                                        icon='warning'):
                 return
             self.runner.cancel()
+            self.runner.wait_stopped(10)
         for job in (self._tick_job, self._watch_job):
             if job:
                 try:

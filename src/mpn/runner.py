@@ -23,6 +23,7 @@ to change to support the UI.
 import os
 import queue
 import re
+import signal
 import subprocess
 import sys
 import tempfile
@@ -93,6 +94,13 @@ class PipelineRunner:
         self.q = queue.Queue()
         self.proc = None
         self._t = None
+        # Each run's end is reported exactly once, by whichever notices first:
+        # the log reader reaching the end of the output, or an abort seeing the
+        # process exit. The token ties a report to the run it belongs to, so a
+        # reader still draining an aborted run cannot end the next one.
+        self._run_token = None
+        self._done_sent = False
+        self._lock = threading.Lock()
         self._start = None
         self._cancelled = False
         self._paused = False
@@ -127,14 +135,23 @@ class PipelineRunner:
         env['PYTHONUNBUFFERED'] = '1'
         env['PYTHONIOENCODING'] = 'utf-8'
         flags = subprocess.CREATE_NEW_PROCESS_GROUP if os.name == 'nt' else 0
+        # Its own session on Linux and macOS, so the run and every process it
+        # starts - the database build's parser workers above all - form one
+        # group that Abort can stop together. See cancel().
         self.proc = subprocess.Popen(
             [self.python_exe, '-u', '-m', 'mesh_aop.cli', '--step', step]
             + (['--config', str(self.config_path)] if self.config_path else [])
             + list(extra or []),
             cwd=self.repo_dir, env=env, stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
-            bufsize=0, creationflags=flags)
-        self._t = threading.Thread(target=self._read, daemon=True)
+            bufsize=0, creationflags=flags,
+            start_new_session=(os.name != 'nt'))
+        token = object()
+        with self._lock:
+            self._run_token = token
+            self._done_sent = False
+        self._t = threading.Thread(target=self._read, args=(self.proc, token),
+                                   daemon=True)
         self._t.start()
         self.q.put((PHASE, 'Starting ' + step))
 
@@ -184,11 +201,22 @@ class PipelineRunner:
         return True
 
     def resume(self):
-        """Let a paused run continue."""
+        """Let a paused run continue.
+
+        Said in the log either way, as the pause is. A run that had actually
+        stopped also prints how long it was held once it starts again; one
+        whose pause was still pending never stopped, and without this line
+        Resume left no trace at all.
+        """
         if not self._pause_asked:
             return True
+        reached = self._paused
         self._control_remove(runcontrol.PAUSE_FILE)
         self._pause_asked = False
+        self.q.put((LOG, '--- resumed: the run continues from where it stopped ---'
+                    if reached else
+                    '--- pause cancelled: the run had not stopped yet, and carries on ---',
+                    'warn'))
         return True
 
     def _control_write(self, name):
@@ -248,20 +276,76 @@ class PipelineRunner:
         self._control_remove(runcontrol.PAUSE_FILE)
         self._pause_asked = False
         self._cancelled = True
+        self.q.put((LOG, '--- abort requested: stopping the run ---', 'warn'))
+        # Off the window's thread. taskkill can take its time - on one managed
+        # machine it did not return at all - and the window froze with it.
+        self._stopper = threading.Thread(target=self._stop,
+                                         args=(self.proc, self._run_token),
+                                         daemon=True)
+        self._stopper.start()
+
+    def wait_stopped(self, timeout):
+        """Give an abort in progress up to `timeout` seconds to finish.
+
+        For closing the window: the stop runs on a background thread, and
+        quitting straight after asking for it could end the program before the
+        run it was meant to stop had been stopped.
+        """
+        stopper = getattr(self, '_stopper', None)
+        if stopper is not None:
+            stopper.join(timeout)
+
+    def _stop(self, proc, token):
+        """Stop the run and everything it started, then report it ended.
+
+        The run is over when its main process has exited. Waiting for the log
+        pipe to close as well is what left Abort hanging: anything the pipeline
+        started - the database build's parser workers - inherits the pipe, and
+        one still alive keeps it open. The window then waited for that
+        process, printed nothing, and sat on "Aborting...".
+        """
         try:
             if os.name == 'nt':
-                subprocess.run(['taskkill', '/F', '/T', '/PID', str(self.proc.pid)],
-                               capture_output=True)
+                # taskkill walks the tree for anything the run started, but on
+                # a managed machine it can stall for a minute or more. So it
+                # runs on its own, as clean-up, and the run itself is ended
+                # below through Windows' own process API, which is immediate.
+                pid = str(proc.pid)
+                threading.Thread(
+                    target=lambda: subprocess.run(
+                        ['taskkill', '/F', '/T', '/PID', pid],
+                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                        timeout=60),
+                    daemon=True).start()
             else:
-                self.proc.terminate()
+                # The whole process group, not the one process: the run was
+                # started in its own session, so its workers are in the group.
+                self._signal_group(proc, signal.SIGTERM)
         except Exception:
+            pass
+        try:
+            proc.wait(timeout=3)
+        except Exception:
+            # Whatever ignored the request is killed outright.
+            if os.name != 'nt':
+                self._signal_group(proc, signal.SIGKILL)
             try:
-                self.proc.kill()
+                proc.kill()
+                proc.wait(timeout=5)
             except Exception:
                 pass
+        self._end_run(proc, token, proc.poll() if proc.poll() is not None else -1)
+
+    @staticmethod
+    def _signal_group(proc, sig):
+        """Signal a run's process group; quiet if it has already gone."""
+        try:
+            os.killpg(os.getpgid(proc.pid), sig)
+        except (ProcessLookupError, PermissionError, OSError):
+            pass
 
     # -- reader ---------------------------------------------------------
-    def _read(self):
+    def _read(self, proc, token):
         """Chunked read, then split on real newlines and bar redraws separately.
 
         os.read returns as soon as anything is available, where a buffered
@@ -270,7 +354,7 @@ class PipelineRunner:
         bare '\\r' as a redraw without collapsing CRLF first classifies every
         ordinary line as a transient and the log stays empty.
         """
-        fd = self.proc.stdout.fileno()
+        fd = proc.stdout.fileno()
         buf = ''
         try:
             while True:
@@ -295,13 +379,28 @@ class PipelineRunner:
         finally:
             if buf.strip():
                 self._emit(buf.rstrip(), permanent=True)
-            rc = self.proc.wait() if self.proc else -1
-            # Reaped AND released. wait() ends the process; dropping the handle
-            # releases the pipe buffers with it, so nothing of a finished run is
-            # still held while the window stays open.
-            self.proc = None
-            self._cleanup_control()
-            self.q.put((DONE, -1 if self._cancelled else rc, self.elapsed()))
+            self._end_run(proc, token, proc.wait())
+
+    def _end_run(self, proc, token, rc):
+        """Report the end of one run, once, and release it.
+
+        Called by the reader when the output ends and by an abort when the
+        process has gone. Whichever comes second finds the report already made
+        and does nothing - and a call for a run that is no longer the current
+        one is ignored, so a reader still draining an aborted run's leftover
+        output can never end the run started after it.
+        """
+        with self._lock:
+            if token is not self._run_token or self._done_sent:
+                return
+            self._done_sent = True
+            # Reaped AND released. Dropping the handle releases the pipe
+            # buffers with it, so nothing of a finished run is still held while
+            # the window stays open.
+            if self.proc is proc:
+                self.proc = None
+        self._cleanup_control()
+        self.q.put((DONE, -1 if self._cancelled else rc, self.elapsed()))
 
     def _emit_split(self, line):
         """A completed line may still hold earlier bar frames before its text."""

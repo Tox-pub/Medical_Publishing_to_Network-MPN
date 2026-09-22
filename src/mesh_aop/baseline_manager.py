@@ -654,6 +654,46 @@ class PubMedBaselineManager:
                 "downloaded ('Always keep on this device') and re-run."
             )
 
+    # How long the build waits for any parser process to hand back a finished
+    # file before it stops and says so. A shard is a handful of files and takes
+    # seconds to a few minutes; twenty minutes of silence is not slow work.
+    STALL_SECONDS = 20 * 60
+    _POLL_SECONDS = 5
+
+    def _next_shard(self, results, block):
+        """The next finished shard, or a clear stop instead of waiting forever.
+
+        multiprocessing.Pool never reports a worker that dies - one killed for
+        running out of memory, say. It replaces the process and the task it
+        held is simply lost, so a plain loop over imap_unordered waits for a
+        result that will never come, with no error, while the window says the
+        build is working. It did exactly that for eight hours.
+
+        So the wait is taken a few seconds at a time. Between waits the run
+        looks for a pause or an abort - the build was the one long step that
+        could not be stopped, because it never reached a checkpoint while it
+        waited - and after STALL_SECONDS with nothing back it stops.
+        """
+        from . import runcontrol
+        waited = 0.0
+        while True:
+            try:
+                return results.next(timeout=self._POLL_SECONDS)
+            except multiprocessing.TimeoutError:
+                pass
+            # A pause is time the user chose, not time the workers lost.
+            if runcontrol.checkpoint(f'database build, block {block}'):
+                waited = 0.0
+                continue
+            waited += self._POLL_SECONDS
+            if waited >= self.STALL_SECONDS:
+                raise RuntimeError(
+                    f'No file finished parsing in {self.STALL_SECONDS // 60} '
+                    f'minutes (block {block}). A parser process has stopped, '
+                    f'most often because the machine ran out of memory. Run the '
+                    f'build again to resume from the last checkpoint; if it '
+                    f'stops again, use fewer parser processes with --max-workers.')
+
     def compile_database(self):
         """Parse all downloaded XML into the master SQLite database in parallel, with resumable checkpoints."""
         print("\n" + "<"*30 + ">"*30)
@@ -746,17 +786,15 @@ class PubMedBaselineManager:
             # One worker pool for the whole run; re-creating it per chunk paid
             # process-spawn overhead on every block (dozens of times per ETL).
             #
-            # maxtasksperchild is what stops it growing. A worker that has
-            # parsed a few hundred gzipped XML files does not hand its heap back
-            # to the operating system - CPython keeps freed arenas - so without
-            # this each worker's memory ratchets upward for the whole build and
-            # is only released when the pool is torn down at the very end. That
-            # is the shape of "it climbed to 13 GB and stayed there".
-            #
-            # Replacing a worker every few tasks returns its memory outright.
-            # The cost is one process spawn per replacement, tenths of a second
-            # against a build measured in hours.
-            pool = multiprocessing.Pool(cores, maxtasksperchild=4)
+            # No maxtasksperchild. It was added to return worker memory by
+            # retiring each worker after four tasks, and with one task per
+            # worker per block that retired every worker at once at block 5.
+            # On Linux the replacements are forked from the running pipeline
+            # and never took up the next task: the build sat idle at block 5
+            # for hours, saying it was working. The memory it was meant to save
+            # was mostly the build's working copy sitting in RAM, which is
+            # handled separately (see _is_ram_backed).
+            pool = multiprocessing.Pool(cores)
             try:
                 for chunk_idx, chunk in enumerate(chunks, 1):
                     local_chunk_paths = []
@@ -769,7 +807,10 @@ class PubMedBaselineManager:
                     sub_chunks = [(sc, str(self.local_workspace))
                                   for sc in sub_chunks if sc]
 
-                    for shard_path_str, parsed_names, article_count in pool.imap_unordered(build_local_shard, sub_chunks):
+                    results = pool.imap_unordered(build_local_shard, sub_chunks)
+                    for _ in range(len(sub_chunks)):
+                        shard_path_str, parsed_names, article_count = \
+                            self._next_shard(results, chunk_idx)
                         cursor.execute("ATTACH DATABASE ? AS temp_shard", (shard_path_str,))
                         cursor.execute("BEGIN TRANSACTION;")
 
